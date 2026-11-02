@@ -1,0 +1,265 @@
+.student-login,
+.professor-login {
+    --login-blue: #315bea;
+    --login-background: #f5f6fb;
+    --login-text: #191c2d;
+    --login-muted: #59617c;
+    --login-border: #dce1ef;
+
+    display: grid;
+    grid-template-columns: 39% 61%;
+    min-height: 100vh;
+    min-height: 100svh;
+    color: var(--login-text);
+    background: var(--login-background);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+.student-login .login-brand-panel,
+.professor-login .brand-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 54px 42px 48px;
+    color: #fff;
+    background: var(--login-blue);
+}
+
+.student-login .login-brand-panel {
+    padding-left: 54px;
+}
+
+.student-login .brand,
+.professor-login .brand {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 10px;
+    color: #fff;
+    text-decoration: none;
+}
+
+.student-login .brand-mark,
+.professor-login .brand-mark {
+    display: inline-flex;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #ffb21f;
+    color: #17203a;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.student-login .brand-name,
+.professor-login .brand-name {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.6px;
+}
+
+.student-login .brand-message,
+.professor-login .brand-message {
+    max-width: 440px;
+}
+
+.student-login .brand-message h1,
+.professor-login .brand-message h1 {
+    margin: 0 0 18px;
+    color: #fff;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1.15px;
+    line-height: 1.45;
+}
+
+.student-login .brand-message p,
+.professor-login .brand-message p {
+    max-width: 430px;
+    margin: 0;
+    color: #fff;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.student-login .login-form-panel,
+.professor-login .form-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 40px;
+    background: var(--login-background);
+}
+
+.student-login .login-card,
+.professor-login .login-card {
+    width: min(100%, 420px);
+    padding: 38px;
+    border: 1px solid var(--login-border);
+    border-radius: 24px;
+    background: #fff;
+}
+
+.student-login .back-link,
+.professor-login .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 17px;
+    color: var(--login-blue);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.student-login .back-link span,
+.professor-login .back-link span {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.student-login .login-card h2,
+.professor-login .login-card h2 {
+    margin: 0 0 4px;
+    color: var(--login-text);
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    line-height: 1.3;
+}
+
+.student-login .login-description,
+.professor-login .description {
+    margin: 0 0 18px;
+    color: var(--login-muted);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.student-login .login-form,
+.professor-login .login-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.student-login .form-field,
+.professor-login .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 17px;
+}
+
+.student-login .form-field label,
+.professor-login .form-field label {
+    color: var(--login-text);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.student-login .form-field input,
+.professor-login .form-field input {
+    width: 100%;
+    height: 47px;
+    padding: 0 15px;
+    border: 1px solid var(--login-border);
+    border-radius: 12px;
+    outline: none;
+    background: #fff;
+    color: var(--login-text);
+    font: inherit;
+    font-size: 14px;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.student-login .form-field input::placeholder,
+.professor-login .form-field input::placeholder {
+    color: var(--login-muted);
+    opacity: 1;
+}
+
+.student-login .form-field input:focus,
+.professor-login .form-field input:focus {
+    border-color: var(--login-blue);
+    box-shadow: 0 0 0 3px rgb(49 91 234 / 12%);
+}
+
+.student-login .submit-button,
+.professor-login .submit-button {
+    width: 100%;
+    height: 46px;
+    margin-top: 1px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--login-blue);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    transition: background-color 150ms ease;
+}
+
+.student-login .submit-button:hover,
+.professor-login .submit-button:hover {
+    background: #284fd5;
+}
+
+.student-login .forgot-link,
+.professor-login .forgot-link {
+    align-self: center;
+    margin-top: 18px;
+    color: var(--login-blue);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+@media (max-width: 767.98px) {
+    .student-login,
+    .professor-login {
+        grid-template-columns: 1fr;
+    }
+
+    .student-login .login-brand-panel,
+    .professor-login .brand-panel {
+        min-height: 220px;
+        padding: 28px 24px;
+    }
+
+    .student-login .brand-message,
+    .professor-login .brand-message {
+        margin-top: 40px;
+    }
+
+    .student-login .brand-message h1,
+    .professor-login .brand-message h1 {
+        font-size: 27px;
+        line-height: 1.3;
+    }
+
+    .student-login .brand-message h1 br,
+    .professor-login .brand-message h1 br {
+        display: none;
+    }
+
+    .student-login .brand-message p,
+    .professor-login .brand-message p {
+        font-size: 14px;
+    }
+
+    .student-login .login-form-panel,
+    .professor-login .form-panel {
+        padding: 28px 20px;
+    }
+
+    .student-login .login-card,
+    .professor-login .login-card {
+        padding: 30px 24px;
+    }
+}
