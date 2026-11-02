@@ -1,0 +1,192 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
+
+:root {
+  --qb-blue: #4169f6;
+  --qb-blue-hover: #2f56e8;
+  --qb-bg: #f5f6fb;
+  --qb-text: #111827;
+  --qb-muted: #6b7280;
+  --qb-pill-bg: #eaf0ff;
+  --qb-icon-bg: #eef2ff;
+  --qb-card-border: #eceef5;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  background: var(--qb-bg);
+  color: var(--qb-text);
+  margin: 0;
+}
+
+.home-page {
+  min-height: 100vh;
+  background: var(--qb-bg);
+}
+
+.site-header {
+  padding: 1.35rem 0 0.5rem;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  color: var(--qb-text);
+}
+
+.brand:hover {
+  color: var(--qb-text);
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--qb-blue);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.brand-name {
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.hero {
+  padding: 2.4rem 0 4rem;
+}
+
+.hero-badge {
+  display: inline-block;
+  background: var(--qb-pill-bg);
+  color: var(--qb-blue);
+  border-radius: 999px;
+  padding: 0.38rem 0.95rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 1.15rem;
+}
+
+.hero-title {
+  color: var(--qb-blue);
+  font-weight: 800;
+  font-size: clamp(2.6rem, 5vw, 3.55rem);
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+  margin-bottom: 1rem;
+}
+
+.hero-subtitle {
+  font-weight: 800;
+  font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+  letter-spacing: -0.03em;
+  line-height: 1.3;
+  margin-bottom: 0.9rem;
+  color: var(--qb-text);
+}
+
+.hero-lead {
+  max-width: 640px;
+  margin: 0 auto;
+  color: var(--qb-muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+.entry-title {
+  font-weight: 800;
+  font-size: 1.08rem;
+  margin: 2.6rem 0 1.35rem;
+  letter-spacing: -0.02em;
+}
+
+.role-card {
+  background: #fff;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 1.15rem;
+  padding: 1.65rem 1.55rem 1.5rem;
+  height: 100%;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+  text-align: left;
+}
+
+.role-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--qb-icon-bg);
+  color: var(--qb-blue);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 1.15rem;
+}
+
+.role-card h2 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.55rem;
+}
+
+.role-card p {
+  color: var(--qb-muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 1.35rem;
+}
+
+.btn-qb {
+  --bs-btn-bg: var(--qb-blue);
+  --bs-btn-border-color: var(--qb-blue);
+  --bs-btn-hover-bg: var(--qb-blue-hover);
+  --bs-btn-hover-border-color: var(--qb-blue-hover);
+  --bs-btn-active-bg: var(--qb-blue-hover);
+  --bs-btn-active-border-color: var(--qb-blue-hover);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-color: #fff;
+  --bs-btn-padding-y: 0.7rem;
+  --bs-btn-font-weight: 700;
+  --bs-btn-font-size: 0.95rem;
+  --bs-btn-border-radius: 999px;
+  letter-spacing: -0.01em;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--qb-bg);
+  color: var(--qb-text);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+@media (max-width: 767.98px) {
+  .hero {
+    padding-top: 1.5rem;
+  }
+
+  .role-card {
+    margin-bottom: 1rem;
+  }
+}
