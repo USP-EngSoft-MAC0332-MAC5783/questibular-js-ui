@@ -34,10 +34,7 @@
               <p>
                 Resolva questões do acervo, faça simulados e acompanhe sua evolução rumo ao ENEM.
               </p>
-              <router-link
-                class="btn btn-qb w-100"
-                :to="{ name: 'login', query: { perfil: 'aluno' } }"
-              >
+              <router-link class="btn btn-qb w-100" :to="{ name: 'login-aluno' }">
                 Entrar como aluno
               </router-link>
             </article>
@@ -52,10 +49,7 @@
               <p>
                 Cadastre alunos na sua turma, acompanhe os resultados e troque feedback com eles.
               </p>
-              <router-link
-                class="btn btn-qb w-100"
-                :to="{ name: 'login', query: { perfil: 'professor' } }"
-              >
+              <router-link class="btn btn-qb w-100" :to="{ name: 'login-professor' }">
                 Entrar como professor
               </router-link>
             </article>

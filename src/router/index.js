@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-import LoginView from '@/views/LoginView.vue'
+import LoginAlunoView from '@/views/LoginAlunoView.vue'
+import LoginProfessorView from '@/views/LoginProfessorView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,9 +12,20 @@ const router = createRouter({
       component: HomeView,
     },
     {
+      path: '/login/aluno',
+      name: 'login-aluno',
+      component: LoginAlunoView,
+      props: { perfil: 'aluno' },
+    },
+    {
+      path: '/login/professor',
+      name: 'login-professor',
+      component: LoginProfessorView,
+      props: { perfil: 'professor' },
+    },
+    {
       path: '/login',
-      name: 'login',
-      component: LoginView,
+      redirect: '/login/aluno',
     },
   ],
   scrollBehavior() {
