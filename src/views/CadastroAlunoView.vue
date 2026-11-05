@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import '../assets/login.css'
+import '../assets/signup.css'
 
 const nome = ref('')
 const email = ref('')
@@ -23,7 +24,7 @@ function handleSubmit() {
 </script>
 
 <template>
-  <main class="student-login">
+  <main class="student-login student-signup">
     <section class="login-brand-panel" aria-label="Questibular">
       <RouterLink class="brand" to="/" aria-label="Questibular — página inicial">
         <span class="brand-mark">Q</span>
@@ -134,47 +135,3 @@ function handleSubmit() {
     </section>
   </main>
 </template>
-
-<style scoped>
-.signup-password-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.signup-password-row .form-field {
-  min-width: 0;
-}
-
-.signup-password-row input {
-  padding: 0 10px;
-  font-size: 12px !important;
-}
-
-.signup-error {
-  margin: 0 0 12px;
-  color: #b42318;
-  font-size: 14px;
-}
-
-.signup-login-prompt {
-  margin: 18px 0 0;
-  color: #59617c;
-  font-size: 14px;
-  text-align: center;
-}
-
-.signup-login-prompt a {
-  margin-left: 4px;
-  color: #315bea;
-  font-weight: 700;
-  text-decoration: none;
-}
-
-@media (max-width: 420px) {
-  .signup-password-row {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-}
-</style>
