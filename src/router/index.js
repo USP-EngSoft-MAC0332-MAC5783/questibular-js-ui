@@ -3,6 +3,7 @@ import HomeView from '@/views/HomeView.vue'
 import LoginAlunoView from '@/views/LoginAlunoView.vue'
 import LoginProfessorView from '@/views/LoginProfessorView.vue'
 import DashboardView from '@/views/DashboardView.vue'
+import CadastroAlunoView from '@/views/CadastroAlunoView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,6 +34,12 @@ const router = createRouter({
     {
       path: '/login',
       redirect: '/login/aluno',
+    },
+    {
+      path: '/cadastro',
+      name: 'cadastro-aluno',
+      component: CadastroAlunoView,
+      meta: { guestOnly: true },
     },
   ],
   scrollBehavior() {

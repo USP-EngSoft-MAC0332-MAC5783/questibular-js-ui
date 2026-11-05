@@ -1,0 +1,306 @@
+/* Estrutura comum dos cadastros */
+.student-signup,
+.professor-signup {
+    min-height: 100vh;
+    min-height: 100svh;
+}
+
+.student-signup .login-brand-panel,
+.professor-signup .brand-panel {
+    padding-top: 54px;
+    padding-bottom: 48px;
+    padding-left: 11%;
+}
+
+.student-signup .login-form-panel,
+.professor-signup .form-panel {
+    padding: 36px;
+}
+
+.student-signup .login-card {
+    width: min(100%, 742px);
+    padding: 40px 46px;
+}
+
+.professor-signup .login-card {
+    width: min(100%, 990px);
+    padding: 40px 50px;
+}
+
+.student-signup .login-card h2,
+.professor-signup .login-card h2 {
+    margin-bottom: 6px;
+    font-size: 30px;
+}
+
+.student-signup .login-description,
+.professor-signup .description {
+    margin-bottom: 22px;
+    color: #59617c;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* Campos e formulários */
+.student-signup .login-form,
+.professor-signup .teacher-signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.student-signup .form-field,
+.professor-signup .form-field {
+    min-width: 0;
+    gap: 5px;
+    margin-bottom: 0;
+}
+
+.student-signup .form-field label,
+.professor-signup .form-field label {
+    font-size: 14px;
+}
+
+.student-signup .form-field input,
+.professor-signup .form-field input {
+    height: 48px;
+    padding: 0 16px;
+    font-size: 14px;
+}
+
+/* Cadastro de aluno: campos de senha lado a lado */
+.student-signup .signup-password-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.student-signup .signup-password-row .form-field {
+    min-width: 0;
+}
+
+.student-signup .signup-password-row input {
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+/* Cadastro de professor: dados e verificação em colunas */
+.professor-signup {
+    grid-template-columns: 33.3% 66.7%;
+}
+
+.professor-signup .signup-columns {
+    display: grid;
+    grid-template-columns: 1fr 1.12fr;
+    align-items: start;
+    gap: 28px;
+}
+
+.professor-signup .personal-data h3,
+.professor-signup .verification-panel h3 {
+    margin: 0 0 16px;
+    color: #191c2d;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.professor-signup .personal-data .form-field,
+.professor-signup .verification-panel .form-field {
+    margin-bottom: 16px;
+}
+
+.professor-signup .personal-data .form-field:last-child,
+.professor-signup .verification-panel .form-field:last-of-type {
+    margin-bottom: 0;
+}
+
+.professor-signup .verification-panel {
+    padding: 22px;
+    border-radius: 18px;
+    background: #e9efff;
+}
+
+.professor-signup .verification-panel h3 {
+    color: #315bea;
+}
+
+.professor-signup .verification-description {
+    margin: 0 0 18px;
+    color: #59617c;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.professor-signup .verification-panel .form-field input {
+    border-color: #e0e4ef;
+}
+
+/* Anexo de comprovante */
+.professor-signup .upload-box {
+    display: flex;
+    min-height: 74px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border: 2px dashed #4169f6;
+    border-radius: 13px;
+    background: #fff;
+    color: #315bea;
+    cursor: pointer;
+    text-align: center;
+}
+
+.professor-signup .upload-title {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.professor-signup .upload-description {
+    margin-top: 4px;
+    color: #59617c;
+    font-size: 12px;
+}
+
+.professor-signup .file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Aviso, confirmação, erros e links */
+.professor-signup .review-notice {
+    margin: 0;
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: #fff3d8;
+    color: #191c2d;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.professor-signup .confirmation {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #59617c;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.professor-signup .confirmation input {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    margin: 0;
+    accent-color: #315bea;
+}
+
+.student-signup .signup-error,
+.professor-signup .signup-error {
+    margin: 0;
+    color: #b42318;
+    font-size: 14px;
+}
+
+.student-signup .signup-login-prompt,
+.professor-signup .login-prompt {
+    margin: 18px 0 0;
+    color: #59617c;
+    font-size: 14px;
+    text-align: center;
+}
+
+.student-signup .signup-login-prompt a,
+.professor-signup .login-prompt a {
+    margin-left: 4px;
+    color: #315bea;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* Ajustes para telas menores */
+@media (max-width: 1000px) {
+    .student-signup .login-form-panel,
+    .professor-signup .form-panel {
+        padding: 24px;
+    }
+
+    .student-signup .login-card,
+    .professor-signup .login-card {
+        padding: 32px;
+    }
+
+    .professor-signup .signup-columns {
+        gap: 18px;
+    }
+
+    .professor-signup .verification-panel {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .student-signup,
+    .professor-signup {
+        grid-template-columns: 1fr;
+    }
+
+    .student-signup .login-brand-panel,
+    .professor-signup .brand-panel {
+        min-height: 220px;
+        padding: 28px 24px;
+    }
+
+    .student-signup .brand-message,
+    .professor-signup .brand-message {
+        margin-top: 36px;
+    }
+
+    .student-signup .brand-message h1,
+    .professor-signup .brand-message h1 {
+        font-size: 27px;
+        line-height: 1.3;
+    }
+
+    .student-signup .brand-message h1 br,
+    .professor-signup .brand-message h1 br {
+        display: none;
+    }
+
+    .student-signup .login-form-panel,
+    .professor-signup .form-panel {
+        padding: 20px 16px;
+    }
+
+    .student-signup .login-card,
+    .professor-signup .login-card {
+        padding: 28px 22px;
+    }
+
+    .student-signup .login-card h2,
+    .professor-signup .login-card h2 {
+        font-size: 27px;
+    }
+
+    .professor-signup .signup-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .student-signup .signup-password-row {
+        grid-template-columns: 1fr;
+    }
+
+    .student-signup .signup-password-row input {
+        padding: 0 16px;
+        font-size: 14px;
+    }
+}
