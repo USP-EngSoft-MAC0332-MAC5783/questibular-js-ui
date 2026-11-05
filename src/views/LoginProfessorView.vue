@@ -1,9 +1,33 @@
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { login } from '@/services/auth'
 import '../assets/login.css'
 
+const router = useRouter()
 const email = ref('')
 const senha = ref('')
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+const handleLogin = async () => {
+  errorMessage.value = ''
+  isLoading.value = true
+
+  try {
+    const data = await login(email.value, senha.value)
+    
+    if (!data.user.roles.includes('teacher') && !data.user.roles.includes('professor')) {
+      throw new Error('Esta conta não é de professor.')
+    }
+
+    router.push('/dashboard') // Redireciona para o dashboard
+  } catch (error) {
+    errorMessage.value = error.message || 'Ocorreu um erro ao fazer login.'
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -32,7 +56,11 @@ const senha = ref('')
         <h2>Entrar como professor</h2>
         <p class="description">Acesse com o e-mail da sua escola.</p>
 
-        <form class="login-form" @submit.prevent>
+        <div v-if="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+
+        <form class="login-form" @submit.prevent="handleLogin">
           <div class="form-field">
             <label for="professor-email">E-mail institucional</label>
             <input
@@ -43,6 +71,7 @@ const senha = ref('')
                 placeholder="professor@escola.edu.br"
                 autocomplete="email"
                 required
+                :disabled="isLoading"
             />
           </div>
 
@@ -56,10 +85,13 @@ const senha = ref('')
                 placeholder="••••••••"
                 autocomplete="current-password"
                 required
+                :disabled="isLoading"
             />
           </div>
 
-          <button class="submit-button" type="submit">Entrar</button>
+          <button class="submit-button" type="submit" :disabled="isLoading">
+            {{ isLoading ? 'Entrando...' : 'Entrar' }}
+          </button>
 
           <a class="forgot-link" href="#" @click.prevent>
             Esqueci minha senha

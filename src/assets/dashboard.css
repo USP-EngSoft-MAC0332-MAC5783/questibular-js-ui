@@ -1,0 +1,36 @@
+.dashboard-page {
+  min-height: 100vh;
+  background: var(--qb-bg);
+  padding: 2rem 0;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-card {
+  max-width: 600px;
+  margin: 0 auto;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+  background: #fff;
+}
+
+.role-badge {
+  font-size: 0.85rem;
+  padding: 0.4em 0.8em;
+  background-color: var(--qb-blue) !important;
+  color: white;
+  border-radius: 999px;
+  text-transform: capitalize;
+}
+
+.success-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+}
