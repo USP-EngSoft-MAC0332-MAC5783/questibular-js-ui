@@ -4,6 +4,7 @@ import LoginAlunoView from '@/views/LoginAlunoView.vue'
 import LoginProfessorView from '@/views/LoginProfessorView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import CadastroAlunoView from '@/views/CadastroAlunoView.vue'
+import CadastroProfessorView from '@/views/CadastroProfessorView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -39,6 +40,12 @@ const router = createRouter({
       path: '/cadastro',
       name: 'cadastro-aluno',
       component: CadastroAlunoView,
+      meta: { guestOnly: true },
+    },
+    {
+      path: '/cadastro/professor',
+      name: 'cadastro-professor',
+      component: CadastroProfessorView,
       meta: { guestOnly: true },
     },
   ],

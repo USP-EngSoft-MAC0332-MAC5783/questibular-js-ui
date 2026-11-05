@@ -97,9 +97,9 @@ const handleLogin = async () => {
             Esqueci minha senha
           </a>
 
-          <a class="forgot-link" href="/cadastro">
+          <RouterLink class="forgot-link" to="/cadastro/professor">
             Cadastre-se
-          </a>
+          </RouterLink>
         </form>
       </div>
     </section>
