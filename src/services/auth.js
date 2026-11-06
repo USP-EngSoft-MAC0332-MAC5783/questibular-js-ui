@@ -1,5 +1,34 @@
 const API_URL = '/api/v1/Auth'
 
+export const registerStudent = async ({ name, email, password }) => {
+  let response
+
+  try {
+    response = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role: 'Student' })
+    })
+  } catch {
+    throw new Error('Não foi possível conectar ao servidor. Tente novamente em instantes.')
+  }
+
+  const data = await response.json().catch(() => null)
+
+  if (!response.ok) {
+    const validationErrors = Object.values(data?.errors || {})
+      .flat()
+      .filter(message => typeof message === 'string')
+      .join(' ')
+
+    const message = data?.detail || validationErrors || data?.title
+      || 'Ocorreu um erro ao tentar realizar o cadastro.'
+    throw new Error(message)
+  }
+
+  return data
+}
+
 export const login = async (email, password) => {
   try {
     const response = await fetch(`${API_URL}/login`, {
