@@ -1,4 +1,5 @@
-.simulados-page {
+.simulados-page,
+.simulado-real-page {
   --qb-blue: #2f5bea;
   --qb-blue-hover: #244cd0;
   --qb-bg: #f6f7fb;
@@ -6,7 +7,9 @@
   --qb-muted: #5b6178;
   --qb-pill-bg: #e8eefe;
   --qb-card-border: #dfe4f2;
+}
 
+.simulados-page {
   display: grid;
   grid-template-columns: minmax(240px, 18%) minmax(0, 1fr);
   min-height: 100vh;
