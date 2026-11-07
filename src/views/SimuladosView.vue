@@ -192,14 +192,17 @@ const userRole = user?.roles?.includes('teacher') ? 'Professor' : 'Aluno'
 
           <div class="simulados-summary-footer">
             <p>Ao finalizar, você recebe feedback de acertos, erros e tempo.</p>
-            <button
+            <RouterLink
               class="btn btn-qb simulados-start"
-              type="button"
-              disabled
-              title="Início do simulado indisponível no momento."
+              :to="{ name: 'simulado-real', query: { modo: 'previa' } }"
+              title="Visualizar a prévia de Matemática do protótipo."
+              aria-describedby="simulados-preview-note"
             >
               Iniciar simulado
-            </button>
+            </RouterLink>
+            <span id="simulados-preview-note" class="visually-hidden">
+              Prévia com uma questão de exemplo. Nenhuma prova real será iniciada.
+            </span>
           </div>
         </section>
       </div>
