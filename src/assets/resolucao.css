@@ -1,0 +1,276 @@
+.resolucao-page {
+  min-height: 100vh;
+  background: var(--qb-bg);
+  padding: 2rem 0 3rem;
+}
+
+.resolucao-container {
+  max-width: 960px;
+}
+
+.resolucao-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.resolucao-titulo h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.25rem;
+}
+
+.resolucao-titulo p {
+  color: var(--qb-muted);
+  margin-bottom: 1.5rem;
+}
+
+.resolucao-secao {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 1.75rem 0 1rem;
+}
+
+/* ---------- Resumo ---------- */
+.resumo-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.resumo-card,
+.areas-card,
+.questao-card {
+  background: #fff;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 1.15rem;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.04);
+}
+
+.resumo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1.1rem 1.25rem;
+}
+
+.resumo-rotulo {
+  color: var(--qb-muted);
+  font-size: 0.82rem;
+}
+
+.resumo-valor {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.areas-card {
+  margin-top: 1rem;
+  padding: 0.25rem 1.5rem 1.25rem;
+}
+
+.area-linha {
+  margin-bottom: 0.85rem;
+}
+
+.area-topo {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.area-topo strong {
+  color: var(--qb-blue);
+}
+
+.area-barra {
+  height: 8px;
+  border-radius: 999px;
+  background: #e5e8f0;
+  overflow: hidden;
+}
+
+.area-barra-preenchida {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--qb-blue);
+}
+
+/* ---------- Questões ---------- */
+.questao-card {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.questao-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.questao-titulo {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem;
+}
+
+.questao-disciplina {
+  display: inline-block;
+  background: var(--qb-pill-bg);
+  color: var(--qb-blue);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-badge {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.status-badge--acerto {
+  background: #e3f6ea;
+  color: #17613a;
+}
+
+.status-badge--erro {
+  background: #fde8e6;
+  color: #8f2a20;
+}
+
+.status-badge--branco {
+  background: #fff1d6;
+  color: #8a5a00;
+}
+
+/* ---------- Gabarito de questão não respondida ---------- */
+.alternativa--gabarito-sem-resposta {
+  background: #fff8e8;
+  border-color: #e8bd68;
+}
+
+.alternativa--gabarito-sem-resposta .alternativa-letra {
+  background: #d99a20;
+  color: #fff;
+}
+
+.alternativa--gabarito-sem-resposta .alternativa-tag {
+  color: #8a5a00;
+}
+
+.questao-enunciado p {
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.questao-enunciado img,
+.alternativa-conteudo img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.5rem 0;
+}
+
+.questao-introducao {
+  font-weight: 600;
+  margin: 1rem 0 0.75rem;
+}
+
+/* ---------- Alternativas ---------- */
+.alternativas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.alternativa {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 0.8rem;
+  background: #fff;
+}
+
+.alternativa-letra {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f2f7;
+  color: var(--qb-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.alternativa-conteudo {
+  flex: 1;
+  min-width: 0;
+}
+
+.alternativa-tag {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.alternativa--correta {
+  background: #ecfdf3;
+  border-color: #86d9a8;
+}
+
+.alternativa--correta .alternativa-letra {
+  background: #16a34a;
+  color: #fff;
+}
+
+.alternativa--correta .alternativa-tag {
+  color: #17613a;
+}
+
+.alternativa--errada {
+  background: #fef2f2;
+  border-color: #f2a5a5;
+}
+
+.alternativa--errada .alternativa-letra {
+  background: #dc2626;
+  color: #fff;
+}
+
+.alternativa--errada .alternativa-tag {
+  color: #8f2a20;
+}
+
+/* ---------- Telas menores ---------- */
+@media (max-width: 767.98px) {
+  .resumo-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .questao-card {
+    padding: 1.1rem;
+  }
+
+  .alternativa {
+    flex-wrap: wrap;
+  }
+}
