@@ -1,13 +1,20 @@
 <script setup>
 import { reactive, ref, computed } from "vue";
 import { useRouter } from "vue-router";
+// [ALTERAÇÃO separação] este arquivo era um componente único (script, template e CSS).
+// O que não é tela saiu daqui:
+//   regras de validação   -> src/utils/validators.js
+//   chamada ao back       -> src/services/auth.js (registerTeacher)
+//   estilo                -> src/assets/cadastroProfessor.css
+import { registerTeacher } from "@/services/auth";
+import * as regras from "@/utils/validators";
+import "../assets/cadastroProfessor.css";
 
 const router = useRouter();
 
-// [ALTERAÇÃO issue #25] endereço base da API.
-// TODO: seguir o mesmo padrão das outras telas (arquivo de serviço, proxy do Vite
-// ou variável de ambiente) e ajustar o nome da variável se for diferente.
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "";
+// [ALTERAÇÃO issue #25] Antes havia aqui um API_BASE_URL lido de VITE_API_URL.
+// [ALTERAÇÃO separação] Não é mais necessário: o auth.js usa '/api/v1/Auth' e o proxy
+// do vite.config.js encaminha para o back.
 
 const form = reactive({
   nome: "",
@@ -27,24 +34,6 @@ const enviando = ref(false);
 const feedback = ref(null); // { tipo: 'success' | 'danger', texto: string }
 const temErros = computed(() => Object.keys(erros).length > 0);
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-// Política mínima: 8+ caracteres, com letra, número e caractere especial
-// Separados por aviso para maior claridade
-const SENHA_REGEX_FULL =
-  /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
-const SENHA_REGEX_PARTIAL = {
-  minLength: /^.{8,}$/,
-  letra: /[A-Za-z]/,
-  numero: /\d/,
-  especial: /[!@#$%^&*(),.?":{}|<>]/,
-};
-const SENHA_ERROS = {
-  MIN_LENGTH: "Mínimo de 8 caracteres.",
-  LETRA: "Deve conter pelo menos uma letra.",
-  NUMERO: "Deve conter pelo menos um número.",
-  ESPECIAL: "Deve conter pelo menos um caractere especial.",
-};
-
 /* const TIPOS_COMPROVANTE = ["application/pdf", "image/png", "image/jpeg"];
  */
 /* function selecionarArquivo(event) {
@@ -59,68 +48,54 @@ const SENHA_ERROS = {
   comprovante.value = arquivo;
 } */
 
-function validarEmail() {
-  if (!EMAIL_REGEX.test(form.email)) {
-    erros.email = "Use um e-mail no formato usuario@dominio.";
+// [ALTERAÇÃO separação] As regras (regex, mensagens e limites de tamanho do
+// RegisterRequest) agora ficam em utils/validators.js. Aqui sobrou só guardar ou
+// remover o erro de cada campo. Os nomes validarXxx() foram mantidos porque o
+// template os chama.
+// erros.senha é uma lista de mensagens (uma por regra); os demais são texto.
+function definirErro(campo, mensagem) {
+  if (mensagem && mensagem.length) {
+    erros[campo] = mensagem;
   } else {
-    delete erros.email;
+    delete erros[campo];
   }
 }
 
-function validarSenha() {
-  if (!SENHA_REGEX_FULL.test(form.senha)) {
-    const mensagens = [];
-    if (!SENHA_REGEX_PARTIAL.minLength.test(form.senha))
-      mensagens.push(SENHA_ERROS.MIN_LENGTH);
-    if (!SENHA_REGEX_PARTIAL.letra.test(form.senha))
-      mensagens.push(SENHA_ERROS.LETRA);
-    if (!SENHA_REGEX_PARTIAL.numero.test(form.senha))
-      mensagens.push(SENHA_ERROS.NUMERO);
-    if (!SENHA_REGEX_PARTIAL.especial.test(form.senha))
-      mensagens.push(SENHA_ERROS.ESPECIAL);
+function validarEmail() {
+  definirErro("email", regras.validarEmail(form.email));
+}
 
-    erros.senha = mensagens;
-  } else {
-    delete erros.senha;
-  }
-  // [ALTERAÇÃO revisão] a revalidação da confirmação saiu do "else" e só roda se a
-  // confirmação já tiver texto. Antes, ela mostrava "As senhas não coincidem" assim
-  // que a senha ficava válida, mesmo sem a pessoa ter tocado na confirmação, e
-  // ficava desatualizada quando a senha ainda era inválida.
-  // Antes (dentro do else): validarConfirmarSenha();
+function validarSenha() {
+  definirErro("senha", regras.validarSenha(form.senha));
+  // [ALTERAÇÃO revisão] a revalidação da confirmação só roda se ela já tiver texto.
+  // Antes, mostrava "As senhas não coincidem" assim que a senha ficava válida, mesmo
+  // sem a pessoa ter tocado na confirmação.
   if (form.confirmarSenha) validarConfirmarSenha();
 }
 
 function validarConfirmarSenha() {
-  if (form.confirmarSenha !== form.senha) {
-    erros.confirmarSenha = "As senhas não coincidem.";
-  } else {
-    delete erros.confirmarSenha;
-  }
+  definirErro(
+    "confirmarSenha",
+    regras.validarConfirmacaoSenha(form.senha, form.confirmarSenha),
+  );
 }
 
 function validarNome() {
-  if (!form.nome.trim()) {
-    erros.nome = "Informe seu nome completo.";
-  } else {
-    delete erros.nome;
-  }
+  definirErro("nome", regras.validarNome(form.nome));
 }
 
 function validarRedeEnsino() {
-  if (!form.redeEnsino.trim()) {
-    erros.redeEnsino = "Informe sua rede de ensino.";
-  } else {
-    delete erros.redeEnsino;
-  }
+  definirErro(
+    "redeEnsino",
+    regras.validarObrigatorio(form.redeEnsino, "Informe sua rede de ensino."),
+  );
 }
 
 function validarEscola() {
-  if (!form.escola.trim()) {
-    erros.escola = "Informe sua escola.";
-  } else {
-    delete erros.escola;
-  }
+  definirErro(
+    "escola",
+    regras.validarObrigatorio(form.escola, "Informe sua escola."),
+  );
 }
 
 function validar() {
@@ -138,35 +113,9 @@ function validar() {
   return Object.keys(erros).length === 0;
 }
 
-// [ALTERAÇÃO issue #25] chamada real à rota de cadastro, no lugar do mock.
-// Antes: um mock com setTimeout que recebia FormData e simulava "e-mail já cadastrado".
-// Contrato (issue #25):
-//   POST /api/v1/auth/register
-//   envio: { name, email, password, role }, em camelCase e inglês
-//   sucesso: { accessToken, refreshToken, accessTokenExpiresAt,
-//              refreshTokenExpiresAt, user: { id, email, roles } }
-//   erro 400: { type, title, status, detail }, com "detail" já em português BR
-async function registrarProfessor(payload) {
-  const resposta = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  // Pode não vir JSON (ex.: erro 500 do servidor), então não deixamos isso quebrar.
-  const corpo = await resposta.json().catch(() => null);
-
-  if (!resposta.ok) {
-    // "deApi" marca mensagens que vieram do back, seguras de mostrar à pessoa.
-    // Falhas de rede (TypeError) caem na mensagem genérica do catch em enviar().
-    const err = new Error(
-      corpo?.detail ?? "Não foi possível concluir o cadastro. Tente novamente.",
-    );
-    err.deApi = true;
-    throw err;
-  }
-  return corpo;
-}
+// [ALTERAÇÃO separação] A função registrarProfessor() e o comentário do contrato da
+// API (POST /api/v1/Auth/register, campos email, name, role e password, erros em
+// "detail" ou "errors") foram para registerTeacher() em services/auth.js.
 
 async function enviar() {
   feedback.value = null;
@@ -174,25 +123,22 @@ async function enviar() {
 
   enviando.value = true;
   try {
-    // [ALTERAÇÃO issue #25] o envio agora é JSON com os campos exigidos pela API.
-    // Antes: FormData (multipart) com nome, email, senha, redeEnsino e escola.
+    // [ALTERAÇÃO issue #25] o envio é JSON com os campos exigidos pela API. O "role"
+    // ("teacher") é definido dentro do registerTeacher().
     // confirmarSenha não vai pro backend (validação só de tela).
-    const payload = {
+    //
+    // [ALTERAÇÃO RegisterRequest] rede de ensino e escola NÃO existem no back:
+    // o RegisterRequest só tem email, name, role e password, então esses dados
+    // não são enviados (campos extras seriam ignorados).
+    // TODO: combinar com o time: remover os dois campos do formulário ou pedir
+    // que o back passe a aceitá-los (a issue #23 pede os campos na tela).
+    // [ALTERAÇÃO issue #23] registro e comprovante removidos do envio.
+    await registerTeacher({
       name: form.nome.trim(),
       email: form.email,
       password: form.senha,
-      role: "teacher", // a API só aceita "student" ou "teacher", em minúsculas
-      // TODO: rede de ensino e escola não aparecem no payload documentado na #25.
-      // Confirmar com o yagohp se o back aceita esses campos e com que nomes
-      // (em inglês e camelCase), depois descomentar e ajustar:
-      // educationNetwork: form.redeEnsino.trim(),
-      // school: form.escola.trim(),
-    };
-    // [ALTERAÇÃO issue #23] registro e comprovante removidos do envio.
-    // dados.append("registro", form.registro);
-    // dados.append("comprovante", comprovante.value);
+    });
 
-    await registrarProfessor(payload);
     // TODO: a resposta traz accessToken e refreshToken. Guardar no mesmo lugar em
     // que a tela de login guarda, se o time decidir que o cadastro já autentica.
     // [ALTERAÇÃO issue #23] a issue pede confirmação e redirecionamento, não
@@ -209,11 +155,13 @@ async function enviar() {
   } catch (e) {
     // [ALTERAÇÃO issue #25] mostra o "detail" enviado pela API (ex.: "Este e-mail
     // já está cadastrado.") em vez de decidir a mensagem pelo código no front.
+    // [ALTERAÇÃO separação] o registerTeacher() já troca falha de rede por uma
+    // mensagem amigável, então aqui basta mostrar e.message. Antes o flag "deApi"
+    // fazia essa distinção.
     feedback.value = {
       tipo: "danger",
-      texto: e.deApi
-        ? e.message
-        : "Não foi possível concluir o cadastro. Tente novamente.",
+      texto:
+        e.message || "Não foi possível concluir o cadastro. Tente novamente.",
     };
   } finally {
     enviando.value = false;
@@ -225,7 +173,7 @@ const irParaLogin = () => router.push("/login/professor");
 </script>
 
 <template>
-  <div class="cadastro">
+  <div class="cadastro-professor">
     <aside class="cadastro__lateral">
       <div class="marca">
         <span class="marca__icone" aria-hidden="true">Q</span>
@@ -515,305 +463,3 @@ const irParaLogin = () => router.push("/login/professor");
     </main>
   </div>
 </template>
-
-<style scoped>
-.cadastro {
-  --azul: #2f5bea;
-  --azul-claro: #e8eefd;
-  --amarelo: #fff1d6;
-  --laranja: #f5a623;
-  --texto: #1b2236;
-  --texto-suave: #5d6578;
-  --borda: #dde1ea;
-  --erro: #c0392b;
-
-  display: grid;
-  grid-template-columns: minmax(280px, 34%) 1fr;
-  min-height: 100vh;
-  color: var(--texto);
-  font-family:
-    Inter,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
-}
-
-/* ---------- Painel lateral ---------- */
-.cadastro__lateral {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 2rem;
-  background: var(--azul);
-  color: #fff;
-}
-.marca {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-}
-.marca__icone {
-  display: grid;
-  place-items: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 0.5rem;
-  background: var(--laranja);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-.lateral__texto h2 {
-  font-size: 1.9rem;
-  font-weight: 700;
-  line-height: 1.25;
-  margin-bottom: 1rem;
-}
-.lateral__texto p {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  opacity: 0.9;
-  max-width: 22rem;
-}
-
-/* ---------- Área do formulário ---------- */
-.cadastro__conteudo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  background: #f5f6fa;
-}
-.cartao {
-  width: 100%;
-  /* [ALTERAÇÃO issue #23] com uma coluna só, o cartão fica mais estreito.
-  max-width: 62rem;
-  */
-  max-width: 34rem;
-  padding: 1.75rem 2rem;
-  background: #fff;
-  border: 1px solid var(--borda);
-  border-radius: 1.25rem;
-}
-.cartao__titulo {
-  margin: 0.9rem 0 0.25rem;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-.cartao__subtitulo {
-  margin-bottom: 1.25rem;
-  font-size: 0.85rem;
-  color: var(--texto-suave);
-}
-
-.colunas {
-  display: grid;
-  /* [ALTERAÇÃO issue #23] uma coluna só.
-  grid-template-columns: 1fr 1fr;
-  */
-  grid-template-columns: 1fr;
-  gap: 1.25rem;
-}
-.coluna {
-  border: 0;
-  padding: 0;
-  margin: 0;
-  min-width: 0;
-}
-.coluna__titulo {
-  float: left;
-  width: 100%;
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-.coluna__titulo + * {
-  clear: both;
-}
-.coluna__titulo--azul {
-  color: var(--azul);
-}
-.coluna--vinculo {
-  padding: 1rem;
-  background: var(--azul-claro);
-  border-radius: 0.9rem;
-}
-.coluna__descricao {
-  margin-bottom: 0.9rem;
-  font-size: 0.78rem;
-  color: var(--texto-suave);
-}
-
-.campo {
-  margin-bottom: 0.85rem;
-}
-.campo label {
-  display: block;
-  margin-bottom: 0.3rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-.campo input[type="text"],
-.campo input[type="email"],
-.campo input[type="password"] {
-  width: 100%;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--borda);
-  border-radius: 0.7rem;
-  background: #fff;
-  font: inherit;
-  font-size: 0.9rem;
-  color: var(--texto);
-}
-.campo input::placeholder {
-  color: #9aa1b2;
-}
-.campo input:focus-visible,
-.upload:focus-within,
-.botao-principal:focus-visible,
-.link-botao:focus-visible {
-  outline: 2px solid var(--azul);
-  outline-offset: 2px;
-}
-.campo input.invalido {
-  border-color: var(--erro);
-}
-.erro {
-  display: block;
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: var(--erro);
-}
-/* [ALTERAÇÃO revisão] a lista de erros da senha agora fica num div; sem isso o ul
-   teria margem e recuo padrão do navegador. */
-.erro ul {
-  margin: 0;
-  padding-left: 1.1rem;
-}
-
-/* [ALTERAÇÃO upload / issue #23] estilos do upload do comprovante, do aviso de
-   análise e da declaração, que não existem mais no template.
-.visualmente-oculto {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-}
-.upload {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.9rem;
-  text-align: center;
-  cursor: pointer;
-  border: 1.5px dashed var(--azul);
-  border-radius: 0.7rem;
-  background: #fff;
-}
-.upload strong {
-  font-size: 0.8rem;
-  color: var(--azul);
-  word-break: break-all;
-}
-.upload span {
-  font-size: 0.68rem;
-  color: var(--texto-suave);
-  font-weight: 400;
-}
-.upload--erro {
-  border-color: var(--erro);
-}
-.aviso {
-  margin: 1.25rem 0 0.9rem;
-  padding: 0.9rem 1rem;
-  background: var(--amarelo);
-  border-radius: 0.7rem;
-  font-size: 0.82rem;
-}
-.declaracao {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-  margin-bottom: 0.75rem;
-}
-.declaracao label {
-  font-size: 0.75rem;
-  color: var(--texto-suave);
-}
-*/
-
-.feedback {
-  margin: 0.5rem 0 0.75rem;
-  padding: 0.7rem 1rem;
-  border-radius: 0.7rem;
-  font-size: 0.85rem;
-}
-.feedback--success {
-  background: #e3f6ea;
-  color: #17613a;
-}
-.feedback--danger {
-  background: #fde8e6;
-  color: #8f2a20;
-}
-
-.botao-principal {
-  width: 100%;
-  padding: 0.8rem;
-  border: 0;
-  border-radius: 0.7rem;
-  background: var(--azul);
-  color: #fff;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.botao-principal:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.link-botao {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--azul);
-  font-weight: 600;
-  cursor: pointer;
-}
-.link-botao--pequeno {
-  font-size: 0.78rem;
-}
-.rodape {
-  margin: 1rem 0 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--texto-suave);
-}
-
-/* ---------- Telas menores ---------- */
-@media (max-width: 991.98px) {
-  .cadastro {
-    grid-template-columns: 1fr;
-  }
-  .cadastro__lateral {
-    gap: 1.5rem;
-    padding: 1.5rem;
-  }
-  .cadastro__conteudo {
-    padding: 1rem;
-  }
-  .cartao {
-    padding: 1.25rem;
-  }
-  .colunas {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
