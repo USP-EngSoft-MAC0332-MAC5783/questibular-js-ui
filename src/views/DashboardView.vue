@@ -300,7 +300,13 @@ onMounted(async () => {
               <p v-else>
                 Finalize simulados para identificarmos sua principal área de melhoria.
               </p>
-              <RouterLink class="btn dashboard-focus-button" :to="{ name: 'simulados' }">
+              <RouterLink
+                class="btn dashboard-focus-button"
+                :to="{
+                  name: 'simulados',
+                  query: weakestArea ? { area: weakestArea.key } : undefined,
+                }"
+              >
                 Estudar área
               </RouterLink>
             </article>
