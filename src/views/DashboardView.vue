@@ -1,26 +1,39 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getMe, logout } from '@/services/auth'
-import { getExamResult, getStudentExamHistory, getStudentScore } from '@/services/exams'
+import {
+  getExamResult,
+  getLinkedStudents,
+  getStudentExamHistory,
+  getStudentScore,
+  getStudentScoreById,
+  getTeacherExamResult,
+} from '@/services/exams'
 import ProfessorDashboardView from '@/views/ProfessorDashboardView.vue'
 import '../assets/simulados.css'
 import '../assets/dashboard.css'
 import '../assets/desempenho.css'
 
 const router = useRouter()
+const route = useRoute()
 const user = ref(null)
 const score = ref(null)
 const history = ref([])
+const viewedStudent = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
 const review = ref(null)
 const isLoadingReview = ref(false)
 const selectedAttempt = ref(null)
+let studentDashboardLoadSequence = 0
 const isTeacher = computed(() =>
   user.value?.roles?.some(role =>
     ['teacher', 'professor'].includes(String(role).toLowerCase())
   )
+)
+const isStudentDashboard = computed(() =>
+  isTeacher.value && Boolean(route.params.studentId)
 )
 
 const userName = computed(() => user.value?.name?.trim() || 'Aluno')
@@ -28,7 +41,7 @@ const userInitial = computed(() =>
   userName.value.charAt(0).toLocaleUpperCase('pt-BR')
 )
 const userRole = computed(() =>
-  user.value?.roles?.includes('teacher') ? 'Professor' : 'Aluno'
+  isTeacher.value ? 'Professor' : 'Aluno'
 )
 
 const averagePercentage = computed(() =>
@@ -130,6 +143,45 @@ function normalizeReviewQuestions(questions) {
   })
 }
 
+async function loadTeacherStudentDashboard(studentId) {
+  const loadSequence = ++studentDashboardLoadSequence
+  isLoading.value = true
+  errorMessage.value = ''
+  viewedStudent.value = null
+  score.value = null
+  history.value = []
+
+  try {
+    const linkedStudents = await getLinkedStudents()
+    if (loadSequence !== studentDashboardLoadSequence) return
+
+    const student = linkedStudents.find(
+      item => String(item.id) === String(studentId)
+    )
+    if (!student) {
+      throw new Error('Este aluno não está vinculado à sua conta de professor.')
+    }
+
+    viewedStudent.value = student
+    const [scoreResponse, historyResponse] = await Promise.all([
+      getStudentScoreById(student.id),
+      getStudentExamHistory(student.id, 3, 0),
+    ])
+    if (loadSequence !== studentDashboardLoadSequence) return
+
+    score.value = scoreResponse
+    history.value = historyResponse?.exams ?? []
+  } catch (error) {
+    if (loadSequence === studentDashboardLoadSequence) {
+      errorMessage.value = error.message || 'Não foi possível carregar o dashboard do aluno.'
+    }
+  } finally {
+    if (loadSequence === studentDashboardLoadSequence) {
+      isLoading.value = false
+    }
+  }
+}
+
 async function openReview(item) {
   const attemptId = item?.attemptId || item?.exam?.id
   if (!attemptId) {
@@ -141,7 +193,9 @@ async function openReview(item) {
   isLoadingReview.value = true
   errorMessage.value = ''
   try {
-    const response = await getExamResult(attemptId, 50, 0)
+    const response = isTeacher.value
+      ? await getTeacherExamResult(attemptId, 50, 0)
+      : await getExamResult(attemptId, 50, 0)
     review.value = {
       attemptId,
       summary: item,
@@ -158,7 +212,9 @@ async function openReview(item) {
 async function loadMoreReviewQuestions() {
   if (!review.value?.details?.metadata?.hasMore) return
   const offset = review.value.questions.length
-  const response = await getExamResult(review.value.attemptId, 50, offset)
+  const response = isTeacher.value
+    ? await getTeacherExamResult(review.value.attemptId, 50, offset)
+    : await getExamResult(review.value.attemptId, 50, offset)
   review.value.questions.push(...normalizeReviewQuestions(response.questions))
   review.value.details.metadata = response.metadata
 }
@@ -173,14 +229,31 @@ async function handleLogout() {
   await router.push({ name: 'home' })
 }
 
+watch(
+  () => route.params.studentId,
+  (studentId) => {
+    if (!user.value || !isTeacher.value) return
+    if (studentId) {
+      void loadTeacherStudentDashboard(studentId)
+      return
+    }
+
+    studentDashboardLoadSequence += 1
+    viewedStudent.value = null
+    score.value = null
+    history.value = []
+    errorMessage.value = ''
+    isLoading.value = false
+  }
+)
+
 onMounted(async () => {
   try {
     user.value = await getMe()
-    const isProfessor = user.value?.roles?.some(role =>
-      ['teacher', 'professor'].includes(String(role).toLowerCase())
-    )
-    if (isProfessor) {
-      isLoading.value = false
+    if (isTeacher.value) {
+      if (route.params.studentId) {
+        await loadTeacherStudentDashboard(route.params.studentId)
+      }
       return
     }
     const [scoreResponse, historyResponse] = await Promise.all([
@@ -198,7 +271,11 @@ onMounted(async () => {
 </script>
 
 <template>
-  <ProfessorDashboardView v-if="isTeacher" :user="user" @logout="handleLogout" />
+  <ProfessorDashboardView
+    v-if="isTeacher && !isStudentDashboard"
+    :user="user"
+    @logout="handleLogout"
+  />
 
   <div v-else class="dashboard-page dashboard-shell">
     <aside class="simulados-sidebar" aria-label="Menu principal">
@@ -207,11 +284,25 @@ onMounted(async () => {
         <span class="brand-name">Questibular</span>
       </RouterLink>
 
-      <nav class="simulados-nav" aria-label="Navegação do aluno">
-        <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }" aria-current="page">Início</RouterLink>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
-        <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }">Simulados</RouterLink>
-        <RouterLink class="simulados-nav-link" :to="{ name: 'desempenho' }">Meu desempenho</RouterLink>
+      <nav class="simulados-nav" :aria-label="isTeacher ? 'Navegação do professor' : 'Navegação do aluno'">
+        <template v-if="isTeacher">
+          <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }">Início</RouterLink>
+          <RouterLink
+            class="simulados-nav-link"
+            :to="{ name: 'student-dashboard', params: { studentId: route.params.studentId } }"
+            aria-current="page"
+          >
+            Meus alunos
+          </RouterLink>
+          <span class="simulados-nav-link" role="link" aria-disabled="true">Feedbacks</span>
+          <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+        </template>
+        <template v-else>
+          <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }" aria-current="page">Início</RouterLink>
+          <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+          <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }">Simulados</RouterLink>
+          <RouterLink class="simulados-nav-link" :to="{ name: 'desempenho' }">Meu desempenho</RouterLink>
+        </template>
       </nav>
 
       <details class="simulados-user-menu">
@@ -234,8 +325,25 @@ onMounted(async () => {
 
     <main class="dashboard-main">
       <header class="dashboard-welcome">
-        <h1>Olá, {{ userName }}</h1>
-        <p>Continue evoluindo na sua preparação para o ENEM.</p>
+        <div>
+          <template v-if="isStudentDashboard">
+            <h1>{{ viewedStudent?.name || 'Dashboard do aluno' }}</h1>
+            <p>
+              {{ viewedStudent ? 'Acompanhamento de desempenho do aluno.' : 'Carregando dados do aluno...' }}
+            </p>
+          </template>
+          <template v-else>
+            <h1>Olá, {{ userName }}</h1>
+            <p>Continue evoluindo na sua preparação para o ENEM.</p>
+          </template>
+        </div>
+        <RouterLink
+          v-if="isTeacher"
+          class="btn btn-qb dashboard-change-student"
+          :to="{ name: 'dashboard' }"
+        >
+          Trocar aluno
+        </RouterLink>
       </header>
 
       <p v-if="isLoading" class="alert alert-light" role="status">Carregando seus dados...</p>
@@ -295,8 +403,8 @@ onMounted(async () => {
               </div>
 
               <div v-else class="dashboard-study-empty">
-                <p>Você ainda não finalizou simulados.</p>
-                <RouterLink class="btn btn-qb" :to="{ name: 'simulados' }">
+                <p>{{ isTeacher ? 'Este aluno ainda não finalizou simulados.' : 'Você ainda não finalizou simulados.' }}</p>
+                <RouterLink v-if="!isTeacher" class="btn btn-qb" :to="{ name: 'simulados' }">
                   Iniciar simulado
                 </RouterLink>
               </div>
@@ -308,14 +416,15 @@ onMounted(async () => {
                 {{ weakestArea?.label || 'Ainda sem dados' }}
               </h3>
               <p v-if="weakestArea">
-                Sua taxa atual nesta área é de
+                {{ isTeacher ? 'A taxa atual do aluno nesta área é de' : 'Sua taxa atual nesta área é de' }}
                 <strong>{{ formatNumber(weakestArea.value) }}</strong>.
-                Foque neste conteúdo nas próximas questões.
+                {{ isTeacher ? 'Esta é a área com menor aproveitamento.' : 'Foque neste conteúdo nas próximas questões.' }}
               </p>
               <p v-else>
-                Finalize simulados para identificarmos sua principal área de melhoria.
+                {{ isTeacher ? 'O aluno precisa finalizar simulados para identificarmos a principal área de melhoria.' : 'Finalize simulados para identificarmos sua principal área de melhoria.' }}
               </p>
               <RouterLink
+                v-if="!isTeacher"
                 class="btn dashboard-focus-button"
                 :to="{
                   name: 'simulados',

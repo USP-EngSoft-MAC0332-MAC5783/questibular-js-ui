@@ -173,7 +173,14 @@ onMounted(loadLinkedStudents)
 
       <nav class="simulados-nav" aria-label="Navegação do professor">
         <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }" aria-current="page">Início</RouterLink>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Minha turma</span>
+        <RouterLink
+          v-if="selectedStudent"
+          class="simulados-nav-link"
+          :to="{ name: 'student-dashboard', params: { studentId: selectedStudent.id } }"
+        >
+          Meus alunos
+        </RouterLink>
+        <span v-else class="simulados-nav-link" role="link" aria-disabled="true">Meus alunos</span>
         <span class="simulados-nav-link" role="link" aria-disabled="true">Feedbacks</span>
         <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
       </nav>
