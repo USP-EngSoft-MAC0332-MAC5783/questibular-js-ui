@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { login } from '@/services/auth'
 import '../assets/login.css'
 
 const router = useRouter()
+const route = useRoute()
 const email = ref('')
 const senha = ref('')
 const isLoading = ref(false)
@@ -56,8 +57,12 @@ const handleLogin = async () => {
 
         <h2>Entrar como aluno</h2>
         <p class="login-description">
-          Use o e-mail e a senha cadastrados pelo seu professor.
+          Use o e-mail e a senha da sua conta.
         </p>
+
+        <div v-if="route.query.cadastro === 'sucesso'" class="alert alert-success" role="status">
+          Cadastro realizado com sucesso. Faça login para continuar.
+        </div>
 
         <div v-if="errorMessage" class="alert alert-danger" role="alert">
           {{ errorMessage }}
