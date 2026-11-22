@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { registerStudent } from '@/services/auth'
 import '../assets/login.css'
 import '../assets/signup.css'
 
@@ -10,16 +11,68 @@ const senha = ref('')
 const confirmarSenha = ref('')
 const codigoTurma = ref('')
 const errorMessage = ref('')
+const successMessage = ref('')
+const isLoading = ref(false)
 
-function handleSubmit() {
+const SENHA_REGEX_PARTIAL = {
+  minLength: /^.{8,}$/,
+  letter: /[A-Za-z]/,
+  number: /\d/,
+  special: /[!@#$%^&*(),.?":{}|<>]/
+}
+
+function validarSenha() {
+  const mensagens = []
+
+  if (!SENHA_REGEX_PARTIAL.minLength.test(senha.value))
+    mensagens.push('A senha deve ter no mínimo 8 caracteres.')
+  if (senha.value.length > 128)
+    mensagens.push('A senha deve ter no máximo 128 caracteres.')
+  if (!SENHA_REGEX_PARTIAL.letter.test(senha.value))
+    mensagens.push('A senha deve conter pelo menos uma letra.')
+  if (!SENHA_REGEX_PARTIAL.number.test(senha.value))
+    mensagens.push('A senha deve conter pelo menos um número.')
+  if (!SENHA_REGEX_PARTIAL.special.test(senha.value))
+    mensagens.push('A senha deve conter pelo menos um caractere especial.')
+
+  return mensagens.join(' ')
+}
+
+async function handleSubmit() {
+  if (isLoading.value) return
+
   errorMessage.value = ''
+  successMessage.value = ''
 
   if (senha.value !== confirmarSenha.value) {
     errorMessage.value = 'As senhas não coincidem.'
     return
   }
 
-  // Conecte aqui a chamada à API de cadastro.
+  const erroSenha = validarSenha()
+  if (erroSenha) {
+    errorMessage.value = erroSenha
+    return
+  }
+
+  if (codigoTurma.value) {
+    errorMessage.value = 'O cadastro com código de turma ainda não está disponível. Deixe o campo em branco para criar sua conta.'
+    return
+  }
+
+  isLoading.value = true
+  try {
+    await registerStudent({
+      name: nome.value,
+      email: email.value,
+      password: senha.value
+    })
+    successMessage.value = 'Cadastro realizado com sucesso! Agora você pode entrar.'
+  } catch (error) {
+    errorMessage.value = error.message || 'Ocorreu um erro ao tentar realizar o cadastro.'
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 
@@ -53,6 +106,9 @@ function handleSubmit() {
           <p v-if="errorMessage" class="signup-error" role="alert">
             {{ errorMessage }}
           </p>
+          <p v-if="successMessage" class="signup-success" role="status">
+            {{ successMessage }}
+          </p>
 
           <div class="form-field">
             <label for="signup-name">Nome completo</label>
@@ -63,7 +119,10 @@ function handleSubmit() {
                 name="name"
                 placeholder="Como você se chama?"
                 autocomplete="name"
+                minlength="3"
+                maxlength="64"
                 required
+                :disabled="isLoading"
             />
           </div>
 
@@ -76,7 +135,9 @@ function handleSubmit() {
                 name="email"
                 placeholder="seunome@email.com"
                 autocomplete="email"
+                maxlength="256"
                 required
+                :disabled="isLoading"
             />
           </div>
 
@@ -90,8 +151,10 @@ function handleSubmit() {
                   name="password"
                   placeholder="Mínimo de 8 caracteres"
                   autocomplete="new-password"
+                  maxlength="128"
                   minlength="8"
                   required
+                  :disabled="isLoading"
               />
             </div>
 
@@ -104,8 +167,10 @@ function handleSubmit() {
                   name="confirmPassword"
                   placeholder="Repita a senha"
                   autocomplete="new-password"
+                  maxlength="128"
                   minlength="8"
                   required
+                  :disabled="isLoading"
               />
             </div>
           </div>
@@ -119,11 +184,12 @@ function handleSubmit() {
                 name="classCode"
                 placeholder="Ex.: 3A-2026"
                 autocomplete="off"
+                :disabled="isLoading"
             />
           </div>
 
-          <button class="submit-button" type="submit">
-            Criar conta
+          <button class="submit-button" type="submit" :disabled="isLoading" :aria-busy="isLoading">
+            {{ isLoading ? 'Cadastrando...' : 'Criar conta' }}
           </button>
         </form>
 

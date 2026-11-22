@@ -211,6 +211,12 @@
     font-size: 14px;
 }
 
+.student-signup .signup-success {
+    margin: 0;
+    color: #087443;
+    font-size: 14px;
+}
+
 .student-signup .signup-login-prompt,
 .professor-signup .login-prompt {
     margin: 18px 0 0;
