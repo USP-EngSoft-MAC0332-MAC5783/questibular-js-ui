@@ -1,4 +1,5 @@
-.simulados-page {
+.simulados-page,
+.simulado-real-page {
   --qb-blue: #2f5bea;
   --qb-blue-hover: #244cd0;
   --qb-bg: #f6f7fb;
@@ -6,7 +7,9 @@
   --qb-muted: #5b6178;
   --qb-pill-bg: #e8eefe;
   --qb-card-border: #dfe4f2;
+}
 
+.simulados-page {
   display: grid;
   grid-template-columns: minmax(240px, 18%) minmax(0, 1fr);
   min-height: 100vh;
@@ -181,6 +184,13 @@ a.simulados-nav-link:hover {
   margin-bottom: 8px;
 }
 
+.simulados-selection-note {
+  margin: 0 0 10px;
+  color: var(--qb-muted);
+  font-size: 14px;
+  line-height: 20px;
+}
+
 .simulados-disciplines {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -217,6 +227,17 @@ a.simulados-nav-link:hover {
   background: var(--qb-pill-bg);
   border-color: var(--qb-blue);
   box-shadow: inset 0 0 0 1px var(--qb-blue);
+}
+
+.simulados-discipline.is-disabled {
+  color: #9a9fb1;
+  background: #f5f6fa;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.simulados-discipline.is-disabled:hover {
+  border-color: var(--qb-card-border);
 }
 
 .simulados-choices {
