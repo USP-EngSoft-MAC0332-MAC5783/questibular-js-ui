@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "test": "vitest run",
+    "build": "npm test && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,7 +17,18 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.1",
-    "vite": "^7.1.12"
+    "@vue/test-utils": "^2.6.0",
+    "jsdom": "^31.0.1",
+    "vite": "^7.1.12",
+    "vitest": "^5.1.1"
+  },
+  "overrides": {
+    "@vue/test-utils": {
+      "js-beautify": {
+        "glob": "14.0.2",
+        "minimatch": "11.0.1"
+      }
+    }
   },
   "allowScripts": {
     "esbuild@0.28.2": true
