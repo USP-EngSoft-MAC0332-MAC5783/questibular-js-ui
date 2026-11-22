@@ -1,17 +1,17 @@
 <script setup>
 import { ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { registerStudent } from '@/services/auth'
 import '../assets/login.css'
 import '../assets/signup.css'
 
+const router = useRouter()
 const nome = ref('')
 const email = ref('')
 const senha = ref('')
 const confirmarSenha = ref('')
 const codigoTurma = ref('')
 const errorMessage = ref('')
-const successMessage = ref('')
 const isLoading = ref(false)
 
 const SENHA_REGEX_PARTIAL = {
@@ -42,7 +42,6 @@ async function handleSubmit() {
   if (isLoading.value) return
 
   errorMessage.value = ''
-  successMessage.value = ''
 
   if (senha.value !== confirmarSenha.value) {
     errorMessage.value = 'As senhas não coincidem.'
@@ -67,7 +66,7 @@ async function handleSubmit() {
       email: email.value,
       password: senha.value
     })
-    successMessage.value = 'Cadastro realizado com sucesso! Agora você pode entrar.'
+    await router.push({ name: 'login-aluno', query: { cadastro: 'sucesso' } })
   } catch (error) {
     errorMessage.value = error.message || 'Ocorreu um erro ao tentar realizar o cadastro.'
   } finally {
@@ -105,9 +104,6 @@ async function handleSubmit() {
         <form class="login-form" @submit.prevent="handleSubmit">
           <p v-if="errorMessage" class="signup-error" role="alert">
             {{ errorMessage }}
-          </p>
-          <p v-if="successMessage" class="signup-success" role="status">
-            {{ successMessage }}
           </p>
 
           <div class="form-field">
@@ -151,11 +147,16 @@ async function handleSubmit() {
                   name="password"
                   placeholder="Mínimo de 8 caracteres"
                   autocomplete="new-password"
-                  maxlength="128"
+                  aria-describedby="signup-password-help"
                   minlength="8"
+                  maxlength="128"
                   required
                   :disabled="isLoading"
               />
+              <small id="signup-password-help" class="form-text">
+                Use de 8 a 128 caracteres, com letra, número e um destes símbolos:
+                ! @ # $ % ^ &amp; * ( ) , . ? " : { } | &lt; &gt;
+              </small>
             </div>
 
             <div class="form-field">
@@ -167,8 +168,8 @@ async function handleSubmit() {
                   name="confirmPassword"
                   placeholder="Repita a senha"
                   autocomplete="new-password"
-                  maxlength="128"
                   minlength="8"
+                  maxlength="128"
                   required
                   :disabled="isLoading"
               />
