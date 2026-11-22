@@ -29,10 +29,10 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/simulados/real',
+      path: '/simulados/real/:id',
       name: 'simulado-real',
       component: SimuladoRealView,
-      meta: { requiresAuth: true }
+      meta: { requiresAuth: true, requiresStudent: true }
     },
     {
       path: '/login/aluno',
@@ -75,6 +75,18 @@ router.beforeEach((to, from, next) => {
     next({ name: 'login-aluno' })
   } else if (to.meta.guestOnly && isAuthenticated) {
     next({ name: 'dashboard' })
+  } else if (to.meta.requiresStudent) {
+    let user = null
+    try {
+      user = JSON.parse(localStorage.getItem('@Questibular:user') || 'null')
+    } catch {
+      user = null
+    }
+    if (!user?.roles?.includes('student')) {
+      next({ name: 'dashboard' })
+    } else {
+      next()
+    }
   } else {
     next()
   }
