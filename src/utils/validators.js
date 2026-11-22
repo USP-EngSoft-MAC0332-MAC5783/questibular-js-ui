@@ -11,7 +11,18 @@ export function validarEmail(email) {
 
 export function validarSenha(senha) {
   if (!senha) return ['Informe sua senha.']
-  return senha.length >= 8 ? [] : ['A senha deve ter no mínimo 8 caracteres.']
+
+  const mensagens = []
+  if (senha.length < 8) mensagens.push('A senha deve ter no mínimo 8 caracteres.')
+  if (senha.length > 128) mensagens.push('A senha deve ter no máximo 128 caracteres.')
+  if (!/[A-Za-z]/.test(senha))
+    mensagens.push('A senha deve conter pelo menos uma letra.')
+  if (!/\d/.test(senha))
+    mensagens.push('A senha deve conter pelo menos um número.')
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(senha))
+    mensagens.push('A senha deve conter pelo menos um caractere especial.')
+
+  return mensagens
 }
 
 export function validarConfirmacaoSenha(senha, confirmacao) {

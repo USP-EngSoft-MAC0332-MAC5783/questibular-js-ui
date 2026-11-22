@@ -272,12 +272,20 @@ const irParaLogin = () => router.push("/login/professor");
                   v-model="form.senha"
                   type="password"
                   autocomplete="new-password"
+                  aria-describedby="senha-ajuda"
+                  minlength="8"
+                  maxlength="128"
+                  required
                   @blur="validarSenha()"
                   @input="erros.senha && validarSenha()"
                   placeholder="Mínimo de 8 caracteres"
                   :class="{ invalido: erros.senha }"
                   :aria-invalid="!!erros.senha"
                 />
+                <small id="senha-ajuda" class="senha-ajuda">
+                  Use de 8 a 128 caracteres, com letra, número e um destes símbolos:
+                  ! @ # $ % ^ &amp; * ( ) , . ? " : { } | &lt; &gt;
+                </small>
                 <!-- Separando cada erro para um aviso.
                      [ALTERAÇÃO revisão] "small" trocado por "div", porque "ul" dentro
                      de "small" não é HTML válido.

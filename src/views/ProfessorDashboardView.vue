@@ -6,6 +6,7 @@ import {
   getLinkedStudents,
   getStudentScoreById,
   linkStudent,
+  unlinkStudent,
 } from '@/services/exams'
 import { logout } from '@/services/auth'
 import '../assets/simulados.css'
@@ -33,6 +34,9 @@ const studentSearch = ref('')
 const manualStudentId = ref('')
 const isLinking = ref(false)
 const linkMessage = ref('')
+const unlinkingStudentId = ref('')
+const unlinkMessage = ref('')
+const unlinkMessageIsError = ref(false)
 
 const professorName = computed(() =>
   props.user?.name?.trim() || 'Professor'
@@ -125,6 +129,45 @@ async function linkById(studentId) {
     linkMessage.value = error.message || 'Não foi possível vincular o aluno.'
   } finally {
     isLinking.value = false
+  }
+}
+
+async function unlinkLinkedStudent(student) {
+  if (unlinkingStudentId.value) return
+
+  const confirmed = window.confirm(
+    `Remover o vínculo com ${student.name}? A conta do aluno não será excluída.`
+  )
+  if (!confirmed) return
+
+  unlinkingStudentId.value = String(student.id)
+  unlinkMessage.value = ''
+  unlinkMessageIsError.value = false
+  try {
+    await unlinkStudent(student.id)
+    students.value = students.value.filter(
+      item => String(item.id) !== String(student.id)
+    )
+    const updatedScores = { ...studentScores.value }
+    delete updatedScores[student.id]
+    studentScores.value = updatedScores
+
+    if (String(selectedStudentId.value) === String(student.id)) {
+      const nextStudent = students.value[0]
+      selectedStudentId.value = nextStudent?.id ?? ''
+      if (nextStudent) {
+        localStorage.setItem('@Questibular:selectedStudentId', String(nextStudent.id))
+      } else {
+        localStorage.removeItem('@Questibular:selectedStudentId')
+      }
+    }
+
+    unlinkMessage.value = `Vínculo com ${student.name} removido.`
+  } catch (error) {
+    unlinkMessage.value = error.message || 'Não foi possível remover o vínculo do aluno.'
+    unlinkMessageIsError.value = true
+  } finally {
+    unlinkingStudentId.value = ''
   }
 }
 
@@ -242,31 +285,56 @@ onMounted(loadLinkedStudents)
         <section class="professor-content-grid">
           <div>
             <h2>Alunos da turma</h2>
+            <p
+              v-if="unlinkMessage"
+              class="professor-unlink-message"
+              :class="{ 'is-error': unlinkMessageIsError }"
+              :role="unlinkMessageIsError ? 'alert' : 'status'"
+            >
+              {{ unlinkMessage }}
+            </p>
             <p v-if="!students.length" class="professor-empty">
               Nenhum aluno vinculado ainda.
             </p>
-            <button
-              v-for="student in students"
-              :key="student.id"
-              type="button"
-              class="professor-student-card"
-              :class="{ 'is-selected': selectedStudentId === student.id }"
-              @click="selectStudent(student)"
-            >
-              <span class="professor-student-avatar">{{ userInitial(student.name) }}</span>
-              <span class="professor-student-info">
-                <strong>{{ student.name }}</strong>
-                <small>
-                  {{ student.lastExamFinishedAt ? 'Último simulado em ' + new Date(student.lastExamFinishedAt).toLocaleDateString('pt-BR') : 'Sem simulados' }}
-                </small>
-              </span>
-              <span class="professor-student-status">
-                {{ selectedStudentId === student.id ? 'Selecionado' : 'Selecionar' }}
-              </span>
-              <span class="professor-student-accuracy">
-                {{ formatAccuracy(student.lastExamAccuracy) }}
-              </span>
-            </button>
+            <div v-else class="professor-student-list">
+              <div
+                v-for="student in students"
+                :key="student.id"
+                class="professor-student-row"
+              >
+                <button
+                  type="button"
+                  class="professor-student-card"
+                  :class="{ 'is-selected': selectedStudentId === student.id }"
+                  @click="selectStudent(student)"
+                >
+                  <span class="professor-student-avatar">{{ userInitial(student.name) }}</span>
+                  <span class="professor-student-info">
+                    <strong>{{ student.name }}</strong>
+                    <small>
+                      {{ student.lastExamFinishedAt ? 'Último simulado em ' + new Date(student.lastExamFinishedAt).toLocaleDateString('pt-BR') : 'Sem simulados' }}
+                    </small>
+                  </span>
+                  <span class="professor-student-status">
+                    {{ selectedStudentId === student.id ? 'Selecionado' : 'Selecionar' }}
+                  </span>
+                  <span class="professor-student-accuracy">
+                    {{ formatAccuracy(student.lastExamAccuracy) }}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  class="professor-student-remove"
+                  :disabled="Boolean(unlinkingStudentId)"
+                  :aria-label="`Remover vínculo com ${student.name}`"
+                  :title="`Remover vínculo com ${student.name}`"
+                  @click="unlinkLinkedStudent(student)"
+                >
+                  <i class="bi bi-person-dash" aria-hidden="true"></i>
+                  {{ unlinkingStudentId === String(student.id) ? 'Removendo...' : 'Remover vínculo' }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <aside class="professor-feedback-card">

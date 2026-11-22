@@ -55,6 +55,11 @@
   font-weight: 700;
   font-size: 0.95rem;
 }
+:root:not([data-theme="dark"]) .cadastro-professor .marca__icone,
+:root[data-theme="dark"] .cadastro-professor .marca__icone {
+  background: #ffb21f;
+  color: #17203a;
+}
 .cadastro-professor .lateral__texto h2 {
   font-size: 1.9rem;
   font-weight: 700;
@@ -175,6 +180,44 @@
   margin-top: 0.25rem;
   font-size: 0.75rem;
   color: var(--erro);
+}
+.cadastro-professor .senha-ajuda {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+:root[data-theme="dark"] .cadastro-professor .senha-ajuda {
+  color: #adb6ce;
+}
+:root[data-theme="dark"] .cadastro-professor .cadastro__conteudo {
+  background: #0b1020;
+}
+:root[data-theme="dark"] .cadastro-professor .cartao {
+  background: #11182a;
+  border-color: #25304a;
+  color: #f4f7ff;
+}
+:root[data-theme="dark"] .cadastro-professor .cartao__titulo,
+:root[data-theme="dark"] .cadastro-professor .coluna__titulo,
+:root[data-theme="dark"] .cadastro-professor .campo label {
+  color: #f4f7ff;
+}
+:root[data-theme="dark"] .cadastro-professor .cartao__subtitulo {
+  color: #adb6ce;
+}
+:root[data-theme="dark"] .cadastro-professor .campo input[type="text"],
+:root[data-theme="dark"] .cadastro-professor .campo input[type="email"],
+:root[data-theme="dark"] .cadastro-professor .campo input[type="password"] {
+  background: #0b1020;
+  border-color: #25304a;
+  color: #f4f7ff;
+}
+:root[data-theme="dark"] .cadastro-professor .campo input::placeholder {
+  color: #adb6ce;
 }
 /* [ALTERAÇÃO revisão] a lista de erros da senha agora fica num div; sem isso o ul
    teria margem e recuo padrão do navegador. */

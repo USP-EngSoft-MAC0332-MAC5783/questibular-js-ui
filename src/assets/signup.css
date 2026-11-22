@@ -84,6 +84,20 @@
     font-size: 12px;
 }
 
+.student-signup .password-help {
+    display: block;
+    margin-top: -8px;
+    color: var(--login-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+:root[data-theme='dark'] .student-signup .password-help {
+    color: #adb6ce;
+}
+
 /* Cadastro de professor: dados e verificação em colunas */
 .professor-signup {
     grid-template-columns: 33.3% 66.7%;

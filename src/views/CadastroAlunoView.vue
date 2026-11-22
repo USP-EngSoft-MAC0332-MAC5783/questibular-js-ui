@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { registerStudent } from '@/services/auth'
+import { validarSenha } from '@/utils/validators'
 import '../assets/login.css'
 import '../assets/signup.css'
 
@@ -14,30 +15,6 @@ const codigoTurma = ref('')
 const errorMessage = ref('')
 const isLoading = ref(false)
 
-const SENHA_REGEX_PARTIAL = {
-  minLength: /^.{8,}$/,
-  letter: /[A-Za-z]/,
-  number: /\d/,
-  special: /[!@#$%^&*(),.?":{}|<>]/
-}
-
-function validarSenha() {
-  const mensagens = []
-
-  if (!SENHA_REGEX_PARTIAL.minLength.test(senha.value))
-    mensagens.push('A senha deve ter no mínimo 8 caracteres.')
-  if (senha.value.length > 128)
-    mensagens.push('A senha deve ter no máximo 128 caracteres.')
-  if (!SENHA_REGEX_PARTIAL.letter.test(senha.value))
-    mensagens.push('A senha deve conter pelo menos uma letra.')
-  if (!SENHA_REGEX_PARTIAL.number.test(senha.value))
-    mensagens.push('A senha deve conter pelo menos um número.')
-  if (!SENHA_REGEX_PARTIAL.special.test(senha.value))
-    mensagens.push('A senha deve conter pelo menos um caractere especial.')
-
-  return mensagens.join(' ')
-}
-
 async function handleSubmit() {
   if (isLoading.value) return
 
@@ -48,9 +25,9 @@ async function handleSubmit() {
     return
   }
 
-  const erroSenha = validarSenha()
-  if (erroSenha) {
-    errorMessage.value = erroSenha
+  const errosSenha = validarSenha(senha.value)
+  if (errosSenha.length) {
+    errorMessage.value = errosSenha.join(' ')
     return
   }
 
@@ -153,10 +130,6 @@ async function handleSubmit() {
                   required
                   :disabled="isLoading"
               />
-              <small id="signup-password-help" class="form-text">
-                Use de 8 a 128 caracteres, com letra, número e um destes símbolos:
-                ! @ # $ % ^ &amp; * ( ) , . ? " : { } | &lt; &gt;
-              </small>
             </div>
 
             <div class="form-field">
@@ -175,6 +148,10 @@ async function handleSubmit() {
               />
             </div>
           </div>
+          <small id="signup-password-help" class="password-help">
+            Use de 8 a 128 caracteres, com letra, número e um destes símbolos:
+            ! @ # $ % ^ &amp; * ( ) , . ? " : { } | &lt; &gt;
+          </small>
 
           <div class="form-field">
             <label for="signup-class-code">Código da turma (opcional)</label>
