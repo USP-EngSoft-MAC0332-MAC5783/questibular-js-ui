@@ -1,11 +1,12 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getAvailableExams, startExam } from '@/services/exams'
 import { logout } from '@/services/auth'
 import '../assets/simulados.css'
 
 const router = useRouter()
+const route = useRoute()
 const disciplines = [
   { id: 'languages', title: 'Linguagens, Códigos e suas Tecnologias', summary: 'Linguagens' },
   { id: 'math', title: 'Matemática e suas Tecnologias', summary: 'Matemática' },
@@ -206,6 +207,17 @@ onMounted(async () => {
       ]
     }
     year.value = years.value[0].value
+    const focusArea = route.query.area
+    if (
+      typeof focusArea === 'string'
+      && ['languages', 'math', 'nature', 'humanities'].includes(focusArea)
+    ) {
+      for (const key of Object.keys(selectedDisciplines.value)) {
+        selectedDisciplines.value[key] = false
+      }
+      selectedDisciplines.value[focusArea] = true
+      questionCount.value = 20
+    }
   } catch (error) {
     examsCatalog.value = [
       { year: '2023', questionCountHumanities: 55, questionCountNature: 34, questionCountLanguages: 49, questionCountMath: 45 },
