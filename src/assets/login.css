@@ -55,6 +55,14 @@
     line-height: 1;
 }
 
+:root:not([data-theme='dark']) .student-login .brand-mark,
+:root:not([data-theme='dark']) .professor-login .brand-mark,
+:root[data-theme='dark'] .student-login .brand-mark,
+:root[data-theme='dark'] .professor-login .brand-mark {
+    background: #ffb21f;
+    color: #17203a;
+}
+
 :root[data-theme='dark'] .student-login .brand,
 :root[data-theme='dark'] .professor-login .brand,
 :root[data-theme='dark'] .simulado-real-brand {
@@ -220,7 +228,11 @@
 .professor-login .forgot-link {
     align-self: center;
     margin-top: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
     color: var(--login-blue);
+    cursor: pointer;
     font-size: 14px;
     font-weight: 700;
     text-decoration: none;

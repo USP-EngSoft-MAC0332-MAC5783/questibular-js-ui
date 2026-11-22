@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { login } from '@/services/auth'
+import PasswordRecoveryDialog from '@/components/PasswordRecoveryDialog.vue'
 import '../assets/login.css'
 
 const router = useRouter()
@@ -10,6 +11,7 @@ const email = ref('')
 const senha = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
+const isRecoveryOpen = ref(false)
 
 const handleLogin = async () => {
   errorMessage.value = ''
@@ -101,9 +103,9 @@ const handleLogin = async () => {
             {{ isLoading ? 'Entrando...' : 'Entrar' }}
           </button>
 
-          <a class="forgot-link" href="#" @click.prevent>
+          <button class="forgot-link" type="button" @click="isRecoveryOpen = true">
             Esqueci minha senha
-          </a>
+          </button>
 
           <a class="forgot-link" href="/cadastro">
             Cadastre-se
@@ -111,5 +113,7 @@ const handleLogin = async () => {
         </form>
       </div>
     </section>
+
+    <PasswordRecoveryDialog v-model="isRecoveryOpen" :initial-email="email" />
   </main>
 </template>

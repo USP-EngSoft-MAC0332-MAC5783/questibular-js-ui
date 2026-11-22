@@ -13,6 +13,13 @@
   padding: 32px 44px 48px;
 }
 
+.dashboard-welcome {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 .dashboard-welcome h1 {
   margin: 0;
   font-size: 28px;
@@ -24,6 +31,11 @@
   margin: 4px 0 24px;
   color: var(--qb-muted);
   font-size: 14px;
+}
+
+.dashboard-change-student {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .dashboard-stat-grid {
@@ -224,6 +236,10 @@
 
   .dashboard-main {
     padding: 24px 16px 36px;
+  }
+
+  .dashboard-welcome {
+    flex-direction: column;
   }
 
   .dashboard-stat-grid {
