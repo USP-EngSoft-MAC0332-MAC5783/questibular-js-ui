@@ -118,6 +118,37 @@ export function linkStudent(studentId) {
   })
 }
 
+export async function unlinkStudent(studentId) {
+  const token = localStorage.getItem('@Questibular:token')
+  if (!token) {
+    throw new Error('Faça login como professor para remover o vínculo do aluno.')
+  }
+
+  let response
+  try {
+    response = await fetch(`/api/v1/teachers/students/${encodeURIComponent(studentId)}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    })
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('Não foi possível conectar ao servidor. Tente novamente.')
+    }
+    throw error
+  }
+
+  if (response.status === 204) return true
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.detail || data?.title || `Não foi possível remover o vínculo (HTTP ${response.status}).`)
+  }
+  return true
+}
+
 export function getStudentScoreById(studentId) {
   return request(`/${encodeURIComponent(studentId)}`, {
     baseUrl: '/api/v1/users/score',
