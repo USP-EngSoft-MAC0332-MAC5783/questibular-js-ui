@@ -10,6 +10,7 @@ const storageKey = `@Questibular:exam:${route.params.id}`
 const examState = ref(null)
 const currentIndex = ref(0)
 const remainingSeconds = ref(null)
+const overtimeSeconds = ref(0)
 const isLoadingMore = ref(false)
 const isFinishing = ref(false)
 const errorMessage = ref('')
@@ -31,22 +32,38 @@ const expectedQuestionCount = computed(() =>
   Number(examState.value?.attempt?.questionCount) || questions.value.length
 )
 const selectedCount = computed(() =>
-  Object.values(examState.value?.answers ?? {}).filter(Boolean).length
+  questions.value.filter(question =>
+    Boolean(selectedAnswerForQuestion(question))
+  ).length
 )
+const missingAnswerCount = computed(() =>
+  Math.max(0, expectedQuestionCount.value - selectedCount.value)
+)
+const canFinish = computed(() => missingAnswerCount.value === 0)
 const selectedAlternative = computed({
   get() {
     if (!currentQuestion.value) return ''
-    return examState.value?.answers[questionKey(currentQuestion.value)] ?? ''
+    return selectedAnswerForQuestion(currentQuestion.value)
   },
   set(value) {
     if (!currentQuestion.value || !examState.value) return
-    examState.value.answers[questionKey(currentQuestion.value)] = value || null
+    examState.value.answers[String(currentQuestion.value.index)] =
+      typeof value === 'string' ? value.trim().toUpperCase() : ''
     persistState()
   },
 })
 const report = computed(() => examState.value?.report?.report ?? null)
 const reportExam = computed(() => examState.value?.report?.exam ?? null)
 const remainingTime = computed(() => {
+  if (overtimeSeconds.value > 0) {
+    const hours = Math.floor(overtimeSeconds.value / 3600)
+    const minutes = Math.floor((overtimeSeconds.value % 3600) / 60)
+    const seconds = overtimeSeconds.value % 60
+    const formatted = hours
+      ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+      : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+    return `+${formatted}`
+  }
   if (remainingSeconds.value === null) return '--:--'
   const hours = Math.floor(remainingSeconds.value / 3600)
   const minutes = Math.floor((remainingSeconds.value % 3600) / 60)
@@ -88,7 +105,12 @@ const categoryResults = computed(() => {
 })
 
 function questionKey(question) {
-  return `${question.index}:${question.title ?? ''}`
+  return String(question.index)
+}
+
+function selectedAnswerForQuestion(question) {
+  const answer = examState.value?.answers?.[questionKey(question)]
+  return typeof answer === 'string' ? answer.trim().toUpperCase() : ''
 }
 
 function parsePercentage(value) {
@@ -173,6 +195,17 @@ async function submitExam() {
   if (!examState.value || isFinishing.value || report.value) return
 
   errorMessage.value = ''
+  if (!canFinish.value) {
+    errorMessage.value = `Responda todas as questões antes de finalizar. Faltam ${missingAnswerCount.value} questão(ões).`
+    const firstMissingIndex = questions.value.findIndex(question =>
+      !selectedAnswerForQuestion(question)
+    )
+    if (firstMissingIndex >= 0) {
+      currentIndex.value = firstMissingIndex
+    }
+    return
+  }
+
   isFinishing.value = true
   try {
     await ensureAllQuestionsAreLoaded()
@@ -183,11 +216,11 @@ async function submitExam() {
       anonymous: attempt.anonymous ?? false,
       ...(attempt.anonymous ? { anonymousToken: attempt.anonymousToken ?? '' } : {}),
       questions: questions.value.map(question => ({
-        title: question.title,
-        index: question.index,
-        correctAlternative: question.correctAlternative ?? null,
-        selectedAlternative: examState.value.answers[questionKey(question)] ?? null,
-      })),
+          title: question.title,
+          index: question.index,
+          correctAlternative: question.correctAlternative ?? null,
+          selectedAlternative: selectedAnswerForQuestion(question),
+        })),
     })
 
     if (!result?.report) {
@@ -209,9 +242,13 @@ function updateTimer() {
     return
   }
 
-  remainingSeconds.value = Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
-  if (remainingSeconds.value === 0) {
-    void submitExam()
+  const difference = deadline - Date.now()
+  if (difference > 0) {
+    remainingSeconds.value = Math.ceil(difference / 1000)
+    overtimeSeconds.value = 0
+  } else {
+    remainingSeconds.value = 0
+    overtimeSeconds.value = Math.max(0, Math.floor((Date.now() - deadline) / 1000))
   }
 }
 
@@ -232,6 +269,18 @@ onMounted(() => {
       throw new Error('Os dados do simulado estão incompletos. Inicie uma nova prova.')
     }
     examState.value.answers ??= {}
+    for (const question of examState.value.questions) {
+      const indexKey = String(question.index)
+      if (!examState.value.answers[indexKey]) {
+        const legacyKey = Object.keys(examState.value.answers).find(key =>
+          key.startsWith(`${question.index}:`)
+        )
+        if (legacyKey) {
+          examState.value.answers[indexKey] = examState.value.answers[legacyKey]
+        }
+      }
+    }
+    persistState()
 
     if (!report.value) {
       updateTimer()
@@ -328,8 +377,13 @@ onBeforeUnmount(() => {
         <h1>{{ currentQuestion?.title }} · Questão {{ currentIndex + 1 }} de {{ expectedQuestionCount }}</h1>
       </div>
 
-      <div class="simulado-real-timer" role="timer" aria-label="Tempo restante">
-        <span>Tempo restante</span>
+      <div
+        class="simulado-real-timer"
+        :class="{ 'is-overtime': overtimeSeconds > 0 }"
+        role="timer"
+        :aria-label="overtimeSeconds > 0 ? 'Tempo excedido' : 'Tempo restante'"
+      >
+        <span>{{ overtimeSeconds > 0 ? 'Tempo excedido' : 'Tempo restante' }}</span>
         <strong>{{ remainingTime }}</strong>
       </div>
     </header>
@@ -410,7 +464,7 @@ onBeforeUnmount(() => {
             v-else
             class="btn btn-qb simulado-real-action simulado-real-confirm"
             type="button"
-            :disabled="isFinishing || isLoadingMore"
+            :disabled="isFinishing || isLoadingMore || !canFinish"
             @click="submitExam"
           >
             {{ isFinishing ? 'Finalizando...' : 'Finalizar simulado' }}
@@ -421,17 +475,20 @@ onBeforeUnmount(() => {
       <aside class="simulado-real-question-panel" aria-labelledby="simulado-real-map-title">
         <h2 id="simulado-real-map-title">Questões</h2>
         <p>{{ selectedCount }} respondidas de {{ expectedQuestionCount }}</p>
+        <p v-if="missingAnswerCount > 0" class="text-danger">
+          Faltam {{ missingAnswerCount }} questão(ões).
+        </p>
 
         <ol class="simulado-real-map" aria-label="Mapa de questões">
           <li v-for="number in expectedQuestionCount" :key="number">
             <button
               class="simulado-real-question-number"
               :class="{
-                'is-answered': questions[number - 1] && examState.answers[questionKey(questions[number - 1])],
+                'is-answered': questions[number - 1] && selectedAnswerForQuestion(questions[number - 1]),
                 'is-current': number === currentIndex + 1,
               }"
               type="button"
-              :aria-label="`Questão ${number}${questions[number - 1] && examState.answers[questionKey(questions[number - 1])] ? ', respondida' : ''}`"
+              :aria-label="`Questão ${number}${questions[number - 1] && selectedAnswerForQuestion(questions[number - 1]) ? ', respondida' : ''}`"
               :aria-current="number === currentIndex + 1 ? 'step' : undefined"
               :disabled="number > questions.length || isLoadingMore || isFinishing"
               @click="goToQuestion(number - 1)"
@@ -441,13 +498,27 @@ onBeforeUnmount(() => {
           </li>
         </ol>
 
+        <p v-if="!canFinish" class="simulado-real-finish-warning" role="status">
+          <i class="bi bi-exclamation-circle" aria-hidden="true"></i>
+          Responda todas as questões para finalizar. Faltam {{ missingAnswerCount }}.
+        </p>
+
         <button
           class="btn btn-outline-primary simulado-real-action simulado-real-outline simulado-real-finish"
           type="button"
-          :disabled="isFinishing || isLoadingMore"
+          :disabled="isFinishing || isLoadingMore || !canFinish"
+          :title="canFinish
+            ? 'Finalizar o simulado'
+            : `Não é possível finalizar: responda todas as questões. Faltam ${missingAnswerCount} questão(ões).`"
           @click="submitExam"
         >
-          {{ isFinishing ? 'Finalizando...' : 'Finalizar simulado' }}
+          {{
+            isFinishing
+              ? 'Finalizando...'
+              : canFinish
+                ? 'Finalizar simulado'
+                : `Finalizar simulado — faltam ${missingAnswerCount}`
+          }}
         </button>
       </aside>
     </main>
