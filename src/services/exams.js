@@ -2,7 +2,7 @@ import { refreshSession } from '@/services/auth'
 
 const API_URL = '/api/v1/Exams'
 
-async function request(path, { method = 'GET', body } = {}) {
+async function request(path, { method = 'GET', body, baseUrl = API_URL } = {}) {
   let token = localStorage.getItem('@Questibular:token')
   if (!token) {
     throw new Error('Faça login como aluno para iniciar um simulado.')
@@ -10,7 +10,7 @@ async function request(path, { method = 'GET', body } = {}) {
 
   async function sendRequest(accessToken) {
     try {
-      return await fetch(`${API_URL}${path}`, {
+      return await fetch(`${baseUrl}${path}`, {
         method,
         headers: {
           Accept: 'application/json',
@@ -69,4 +69,16 @@ export function getMoreExamQuestions(id) {
 
 export function finishExam(payload) {
   return request('/finish', { method: 'POST', body: payload })
+}
+
+export function getStudentExamHistory(studentId, limit = 50, offset = 0) {
+  return request(`/list/${encodeURIComponent(studentId)}?limit=${limit}&offset=${offset}`)
+}
+
+export function getExamResult(attemptId, limit = 50, offset = 0) {
+  return request(`/${encodeURIComponent(attemptId)}/results?limit=${limit}&offset=${offset}`)
+}
+
+export function getStudentExamResults(studentId, limit = 50, offset = 0) {
+  return getStudentExamHistory(studentId, limit, offset)
 }
