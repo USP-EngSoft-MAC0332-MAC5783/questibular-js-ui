@@ -147,7 +147,7 @@
 
 .dashboard-study-item {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 84px;
+  grid-template-columns: 92px minmax(0, 1fr) auto;
   align-items: center;
   gap: 14px;
   min-height: 72px;
@@ -193,6 +193,107 @@
   cursor: pointer;
 }
 
+.dashboard-study-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dashboard-study-score,
+.dashboard-study-review {
+  padding: 8px 10px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dashboard-study-score {
+  color: var(--qb-blue);
+  background: transparent;
+  border: 1px solid var(--qb-blue);
+  cursor: pointer;
+}
+
+.dashboard-study-review {
+  border: 0;
+}
+
+.dashboard-study-review:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.dashboard-score-modal {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(5 10 25 / 58%);
+}
+
+.dashboard-score-panel {
+  display: flex;
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  flex-direction: column;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgb(5 10 25 / 24%);
+  overflow: hidden;
+}
+
+.dashboard-score-panel > header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dashboard-score-panel > header h2 {
+  font-size: 20px;
+}
+
+.dashboard-score-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.dashboard-score-close {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.dashboard-score-sections .simulado-real-result-card {
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.dashboard-score-sections .simulado-real-result-lead {
+  margin: 10px 0 16px;
+  font-size: 30px;
+}
+
 .dashboard-study-empty {
   max-width: 650px;
   padding: 22px;
@@ -203,9 +304,23 @@
 
 :root[data-theme='dark'] .dashboard-stat,
 :root[data-theme='dark'] .dashboard-study-item,
-:root[data-theme='dark'] .dashboard-study-empty {
+:root[data-theme='dark'] .dashboard-study-empty,
+:root[data-theme='dark'] .dashboard-score-panel {
   background: #11182a;
   border-color: #25304a;
+  color: #f4f7ff;
+}
+
+:root[data-theme='dark'] .dashboard-score-close {
+  background: #0b1020;
+  border-color: #25304a;
+  color: #f4f7ff;
+}
+
+:root[data-theme='dark'] .dashboard-study-score {
+  color: #dbe5ff;
+  background: #17284f;
+  border-color: #6f91ff;
 }
 
 :root[data-theme='dark'] .dashboard-focus-card {
@@ -250,8 +365,22 @@
     grid-template-columns: 84px minmax(0, 1fr);
   }
 
+  .dashboard-study-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+
   .dashboard-study-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-score-modal {
+    padding: 12px;
+  }
+
+  .dashboard-score-panel {
+    max-height: calc(100vh - 24px);
+    padding: 16px;
   }
 
   .dashboard-study-review {

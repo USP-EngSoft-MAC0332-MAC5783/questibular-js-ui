@@ -14,19 +14,41 @@ import ProfessorDashboardView from '@/views/ProfessorDashboardView.vue'
 import '../assets/simulados.css'
 import '../assets/dashboard.css'
 import '../assets/desempenho.css'
+import '../assets/simulado-real.css'
 
 const router = useRouter()
 const route = useRoute()
 const user = ref(null)
 const score = ref(null)
 const history = ref([])
+const scoreAttempts = ref([])
 const viewedStudent = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
 const review = ref(null)
 const isLoadingReview = ref(false)
 const selectedAttempt = ref(null)
+const selectedScoreAttempt = ref(null)
 let studentDashboardLoadSequence = 0
+const scoreDisciplines = [
+  { key: 'humanities', questionCountKey: 'questionCountHumanities', label: 'Ciências Humanas', focusLabel: 'Ciências Humanas' },
+  { key: 'nature', questionCountKey: 'questionCountNature', label: 'Ciências da Natureza', focusLabel: 'Ciências da Natureza' },
+  { key: 'languages', questionCountKey: 'questionCountLanguages', label: 'Linguagens', focusLabel: 'Linguagens e Códigos' },
+  { key: 'math', questionCountKey: 'questionCountMath', label: 'Matemática', focusLabel: 'Matemática' },
+]
+const scoreAreas = computed(() => {
+  const report = selectedScoreAttempt.value?.report
+  const summary = report?.summary
+  if (!report || !summary) return []
+
+  return scoreDisciplines
+    .filter(({ key }) => report[key] && summary[key] != null)
+    .map(area => ({
+      ...area,
+      correct: report.correctAnswers?.[area.key],
+      percentage: summary[area.key],
+    }))
+})
 const isTeacher = computed(() =>
   user.value?.roles?.some(role =>
     ['teacher', 'professor'].includes(String(role).toLowerCase())
@@ -57,12 +79,20 @@ const weakestArea = computed(() => {
   const performance = score.value?.performanceDisciplines
   if (!performance) return null
 
-  const areas = [
-    { key: 'math', label: 'Matemática', value: parseNumber(performance.math) },
-    { key: 'nature', label: 'Ciências da Natureza', value: parseNumber(performance.nature) },
-    { key: 'languages', label: 'Linguagens e Códigos', value: parseNumber(performance.languages) },
-    { key: 'humanities', label: 'Ciências Humanas', value: parseNumber(performance.humanities) },
-  ].filter(area => area.value !== null)
+  const areas = scoreDisciplines
+    .map(area => ({
+      ...area,
+      label: area.focusLabel,
+      value: parseNumber(performance[area.key]),
+    }))
+    .filter(area =>
+      area.value !== null
+      && scoreAttempts.value.some(attempt =>
+        attempt?.report?.[area.key]
+        && attempt.report.summary?.[area.key] != null
+        && Number(attempt.exam?.[area.questionCountKey]) > 0
+      )
+    )
 
   if (!areas.length) return null
   return areas.reduce((worst, area) =>
@@ -118,6 +148,80 @@ function attemptPercentage(item) {
   return formatNumber(item?.report?.summary?.totalPercentage)
 }
 
+async function getAllStudentExamHistory(studentId) {
+  const pageSize = 50
+  const attempts = []
+  let offset = 0
+
+  while (true) {
+    const response = await getStudentExamHistory(studentId, pageSize, offset)
+    const page = response?.exams ?? []
+    attempts.push(...page)
+    if (page.length < pageSize) return attempts
+    offset += page.length
+  }
+}
+
+function formatAttemptScore(value) {
+  const parsed = parseNumber(value)
+  return parsed === null
+    ? 'Não informado'
+    : `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(parsed)}%`
+}
+
+function attemptCorrectPercentage(item) {
+  return parseNumber(item?.report?.summary?.totalPercentage)
+}
+
+function attemptIncorrectPercentage(item) {
+  const correctPercentage = attemptCorrectPercentage(item)
+  return correctPercentage === null ? null : Math.max(0, 100 - correctPercentage)
+}
+
+function attemptElapsedSeconds(item) {
+  const startedAt = Date.parse(item?.report?.startedAt ?? '')
+  const finishAt = Date.parse(item?.report?.finishAt ?? '')
+  if (!Number.isFinite(startedAt) || !Number.isFinite(finishAt)) return null
+
+  const elapsed = Math.floor((finishAt - startedAt) / 1000)
+  return elapsed >= 0 ? elapsed : null
+}
+
+function formatAttemptDuration(item) {
+  const seconds = attemptElapsedSeconds(item)
+  if (seconds === null) return 'Não informado'
+
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const remainder = seconds % 60
+  if (hours) return `${hours}h ${minutes}min ${remainder}s`
+  if (minutes) return `${minutes}min ${remainder}s`
+  return `${remainder}s`
+}
+
+function formatAttemptAverageTime(item) {
+  const elapsed = attemptElapsedSeconds(item)
+  const questionCount = Number(item?.report?.questionCount)
+  if (elapsed === null || !questionCount) return 'Não informado'
+
+  const average = elapsed / questionCount
+  return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(average)} s`
+}
+
+function formatAttemptDateTime(value) {
+  if (!value) return 'Não informado'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleString('pt-BR')
+}
+
+function openScore(item) {
+  selectedScoreAttempt.value = item
+}
+
+function closeScore() {
+  selectedScoreAttempt.value = null
+}
+
 function selectedLetter(question) {
   const selected = question?.selectedAlternative
   if (typeof selected === 'string') {
@@ -150,6 +254,7 @@ async function loadTeacherStudentDashboard(studentId) {
   viewedStudent.value = null
   score.value = null
   history.value = []
+  scoreAttempts.value = []
 
   try {
     const linkedStudents = await getLinkedStudents()
@@ -165,12 +270,13 @@ async function loadTeacherStudentDashboard(studentId) {
     viewedStudent.value = student
     const [scoreResponse, historyResponse] = await Promise.all([
       getStudentScoreById(student.id),
-      getStudentExamHistory(student.id, 3, 0),
+      getAllStudentExamHistory(student.id),
     ])
     if (loadSequence !== studentDashboardLoadSequence) return
 
     score.value = scoreResponse
-    history.value = historyResponse?.exams ?? []
+    scoreAttempts.value = historyResponse
+    history.value = historyResponse.slice(0, 3)
   } catch (error) {
     if (loadSequence === studentDashboardLoadSequence) {
       errorMessage.value = error.message || 'Não foi possível carregar o dashboard do aluno.'
@@ -242,6 +348,7 @@ watch(
     viewedStudent.value = null
     score.value = null
     history.value = []
+    scoreAttempts.value = []
     errorMessage.value = ''
     isLoading.value = false
   }
@@ -258,10 +365,11 @@ onMounted(async () => {
     }
     const [scoreResponse, historyResponse] = await Promise.all([
       getStudentScore(),
-      getStudentExamHistory(user.value.id, 3, 0),
+      getAllStudentExamHistory(user.value.id),
     ])
     score.value = scoreResponse
-    history.value = historyResponse?.exams ?? []
+    scoreAttempts.value = historyResponse
+    history.value = historyResponse.slice(0, 3)
   } catch (error) {
     errorMessage.value = error.message || 'Não foi possível carregar a página inicial.'
   } finally {
@@ -391,14 +499,24 @@ onMounted(async () => {
                       <span v-if="attemptPercentage(item) !== '0%'"> · {{ attemptPercentage(item) }} de acertos</span>
                     </p>
                   </div>
-                  <button
-                    class="dashboard-study-review"
-                    type="button"
-                    :disabled="isLoadingReview"
-                    @click="openReview(item)"
-                  >
-                    {{ isLoadingReview && selectedAttempt === item ? 'Carregando...' : 'Revisar' }}
-                  </button>
+                  <div class="dashboard-study-actions">
+                    <button
+                      class="dashboard-study-score"
+                      type="button"
+                      :aria-label="`Ver pontuação de ${attemptTitle(item)}`"
+                      @click="openScore(item)"
+                    >
+                      Pontuação
+                    </button>
+                    <button
+                      class="dashboard-study-review"
+                      type="button"
+                      :disabled="isLoadingReview"
+                      @click="openReview(item)"
+                    >
+                      {{ isLoadingReview && selectedAttempt === item ? 'Carregando...' : 'Revisar' }}
+                    </button>
+                  </div>
                 </article>
               </div>
 
@@ -420,11 +538,14 @@ onMounted(async () => {
                 <strong>{{ formatNumber(weakestArea.value) }}</strong>.
                 {{ isTeacher ? 'Esta é a área com menor aproveitamento.' : 'Foque neste conteúdo nas próximas questões.' }}
               </p>
+              <p v-else-if="attemptsCount > 0">
+                {{ isTeacher ? 'Ainda não há pontuação por área nos simulados deste aluno para indicar uma matéria.' : 'Ainda não há pontuação por área nos seus simulados para indicar uma matéria.' }}
+              </p>
               <p v-else>
                 {{ isTeacher ? 'O aluno precisa finalizar simulados para identificarmos a principal área de melhoria.' : 'Finalize simulados para identificarmos sua principal área de melhoria.' }}
               </p>
               <RouterLink
-                v-if="!isTeacher"
+                v-if="!isTeacher && weakestArea"
                 class="btn dashboard-focus-button"
                 :to="{
                   name: 'simulados',
@@ -438,6 +559,93 @@ onMounted(async () => {
         </section>
       </template>
     </main>
+
+    <div
+      v-if="selectedScoreAttempt"
+      class="dashboard-score-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="score-title"
+      @click.self="closeScore"
+    >
+      <section class="dashboard-score-panel">
+        <header>
+          <div>
+            <h2 id="score-title">{{ attemptTitle(selectedScoreAttempt) }}</h2>
+          </div>
+          <button type="button" class="dashboard-score-close" aria-label="Fechar pontuação" @click="closeScore">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <div class="dashboard-score-sections">
+          <section class="simulado-real-result-card">
+            <h2>Seu desempenho</h2>
+            <p v-if="attemptCorrectPercentage(selectedScoreAttempt) !== null" class="simulado-real-result-lead">
+              {{ formatAttemptScore(attemptCorrectPercentage(selectedScoreAttempt)) }} de acertos
+            </p>
+            <p v-else class="simulado-real-result-lead">Relatório recebido</p>
+
+            <dl class="simulado-real-result-stats">
+              <div>
+                <dt>Acertos</dt>
+                <dd>{{ formatAttemptScore(attemptCorrectPercentage(selectedScoreAttempt)) }}</dd>
+              </div>
+              <div>
+                <dt>Erros</dt>
+                <dd>{{ formatAttemptScore(attemptIncorrectPercentage(selectedScoreAttempt)) }}</dd>
+              </div>
+              <div>
+                <dt>Tempo total</dt>
+                <dd>{{ formatAttemptDuration(selectedScoreAttempt) }}</dd>
+              </div>
+              <div>
+                <dt>Tempo médio por questão</dt>
+                <dd>{{ formatAttemptAverageTime(selectedScoreAttempt) }}</dd>
+              </div>
+              <div>
+                <dt>Questões respondidas</dt>
+                <dd>{{ selectedScoreAttempt.report?.questionCount ?? 'Não informado' }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section v-if="scoreAreas.length" class="simulado-real-result-card">
+            <h2>Desempenho por área</h2>
+            <dl class="simulado-real-result-categories">
+              <div v-for="area in scoreAreas" :key="area.key">
+                <dt>
+                  {{ area.label }}
+                  <span v-if="area.correct != null"> · {{ area.correct }} acertos</span>
+                </dt>
+                <dd>{{ formatAttemptScore(area.percentage) }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="simulado-real-result-card simulado-real-result-dates">
+            <h2>Período do simulado</h2>
+            <p>
+              Início:
+              <time v-if="selectedScoreAttempt.report?.startedAt" :datetime="selectedScoreAttempt.report.startedAt">
+                {{ formatAttemptDateTime(selectedScoreAttempt.report.startedAt) }}
+              </time>
+              <span v-else>Não informado</span>
+            </p>
+            <p>
+              Término:
+              <time v-if="selectedScoreAttempt.report?.finishAt" :datetime="selectedScoreAttempt.report.finishAt">
+                {{ formatAttemptDateTime(selectedScoreAttempt.report.finishAt) }}
+              </time>
+              <span v-else>Não informado</span>
+            </p>
+            <p v-if="selectedScoreAttempt.exam?.year">
+              Ano da prova: {{ selectedScoreAttempt.exam.year }}
+            </p>
+          </section>
+        </div>
+      </section>
+    </div>
 
     <div v-if="review" class="desempenho-review" role="dialog" aria-modal="true" aria-labelledby="review-title">
       <section class="desempenho-review-panel">
