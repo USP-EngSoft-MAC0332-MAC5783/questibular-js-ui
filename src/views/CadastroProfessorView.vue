@@ -175,10 +175,10 @@ const irParaLogin = () => router.push("/login/professor");
 <template>
   <div class="cadastro-professor">
     <aside class="cadastro__lateral">
-      <div class="marca">
+      <RouterLink class="marca" :to="{ name: 'home' }" aria-label="Questibular — página inicial">
         <span class="marca__icone" aria-hidden="true">Q</span>
         <span class="marca__nome">Questibular</span>
-      </div>
+      </RouterLink>
 
       <div class="lateral__texto">
         <h2>Acompanhe cada aluno da sua turma, sem planilhas.</h2>

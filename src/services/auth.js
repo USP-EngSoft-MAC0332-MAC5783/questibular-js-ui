@@ -66,6 +66,43 @@ export const login = async (email, password) => {
   }
 }
 
+export const refreshSession = async () => {
+  const refreshToken = localStorage.getItem('@Questibular:refreshToken')
+  if (!refreshToken) {
+    throw new Error('Sessão expirada. Faça login novamente.')
+  }
+
+  let response
+  try {
+    response = await fetch(`${API_URL}/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken })
+    })
+  } catch (error) {
+    if (error.name === 'TypeError') {
+      throw new Error('Não foi possível conectar ao servidor. Tente novamente.')
+    }
+    throw error
+  }
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok || !data?.accessToken) {
+    localStorage.removeItem('@Questibular:token')
+    localStorage.removeItem('@Questibular:refreshToken')
+    localStorage.removeItem('@Questibular:user')
+    throw new Error(data?.detail || data?.title || 'Sessão expirada. Faça login novamente.')
+  }
+
+  localStorage.setItem('@Questibular:token', data.accessToken)
+  localStorage.setItem('@Questibular:refreshToken', data.refreshToken)
+  if (data.user) {
+    localStorage.setItem('@Questibular:user', JSON.stringify(data.user))
+  }
+
+  return data.accessToken
+}
+
 export const getMe = async () => {
   const token = localStorage.getItem('@Questibular:token')
   

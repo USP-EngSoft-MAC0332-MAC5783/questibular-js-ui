@@ -55,6 +55,12 @@
     line-height: 1;
 }
 
+:root[data-theme='dark'] .student-login .brand,
+:root[data-theme='dark'] .professor-login .brand,
+:root[data-theme='dark'] .simulado-real-brand {
+  color: #f4f7ff;
+}
+
 .student-login .brand-name,
 .professor-login .brand-name {
     font-size: 20px;

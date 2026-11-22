@@ -1,27 +1,36 @@
+import { refreshSession } from '@/services/auth'
+
 const API_URL = '/api/v1/Exams'
 
 async function request(path, { method = 'GET', body } = {}) {
-  const token = localStorage.getItem('@Questibular:token')
+  let token = localStorage.getItem('@Questibular:token')
   if (!token) {
     throw new Error('Faça login como aluno para iniciar um simulado.')
   }
 
-  let response
-  try {
-    response = await fetch(`${API_URL}${path}`, {
-      method,
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-        ...(body ? { 'Content-Type': 'application/json' } : {}),
-      },
-      ...(body ? { body: JSON.stringify(body) } : {}),
-    })
-  } catch (error) {
-    if (error instanceof TypeError) {
-      throw new Error('Não foi possível conectar à API de simulados. Verifique se o backend está rodando.')
+  async function sendRequest(accessToken) {
+    try {
+      return await fetch(`${API_URL}${path}`, {
+        method,
+        headers: {
+          Accept: 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          ...(body ? { 'Content-Type': 'application/json' } : {}),
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      })
+    } catch (error) {
+      if (error instanceof TypeError) {
+        throw new Error('Não foi possível conectar à API de simulados. Verifique se o backend está rodando.')
+      }
+      throw error
     }
-    throw error
+  }
+
+  let response = await sendRequest(token)
+  if (response.status === 401) {
+    token = await refreshSession()
+    response = await sendRequest(token)
   }
 
   const data = await response.json().catch(() => null)

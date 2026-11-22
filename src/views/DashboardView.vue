@@ -38,9 +38,17 @@ const handleLogout = async () => {
           <span class="brand-name">Questibular</span>
         </router-link>
         
-        <button @click="handleLogout" class="btn btn-outline-danger btn-sm rounded-pill fw-bold px-3">
-          Sair
-        </button>
+        <details class="profile-menu">
+          <summary class="profile-menu-trigger" :aria-label="`Menu de ${user?.name ?? 'usuário'}`">
+            <span>{{ user?.name?.charAt(0).toLocaleUpperCase('pt-BR') ?? 'U' }}</span>
+          </summary>
+          <div class="profile-menu-actions">
+            <button type="button" @click="handleLogout">
+              <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+              Sair do login
+            </button>
+          </div>
+        </details>
       </header>
 
       <div v-if="isLoading" class="text-center mt-5">
