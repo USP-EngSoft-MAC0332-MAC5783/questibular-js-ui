@@ -1,0 +1,104 @@
+.teacher-feedback-heading {
+  margin-bottom: 24px;
+}
+
+.teacher-feedback-heading p {
+  margin-bottom: 0;
+}
+
+.teacher-feedback-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+  gap: 20px;
+}
+
+.teacher-feedback-card {
+  min-width: 0;
+  min-height: 220px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 16px;
+}
+
+.teacher-feedback-card h2 {
+  margin: 0 0 14px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.teacher-feedback-empty,
+.teacher-feedback-notice {
+  color: var(--qb-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.teacher-feedback-notice {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: var(--qb-pill-bg);
+  border-radius: 10px;
+}
+
+.teacher-feedback-form {
+  display: grid;
+  gap: 9px;
+}
+
+.teacher-feedback-form label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.teacher-feedback-form input,
+.teacher-feedback-form textarea {
+  width: 100%;
+  padding: 11px 12px;
+  color: var(--qb-text);
+  background: #fff;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 10px;
+  font: inherit;
+}
+
+.teacher-feedback-form textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.teacher-feedback-form button {
+  justify-self: start;
+  margin-top: 5px;
+}
+
+.teacher-feedback-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+:root[data-theme='dark'] .teacher-feedback-card {
+  color: #f4f7ff;
+  background: #11182a;
+  border-color: #25304a;
+}
+
+:root[data-theme='dark'] .teacher-feedback-form input,
+:root[data-theme='dark'] .teacher-feedback-form textarea {
+  color: #f4f7ff;
+  background: #0b1020;
+  border-color: #25304a;
+}
+
+@media (max-width: 900px) {
+  .teacher-feedback-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 767.98px) {
+  .teacher-feedback-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

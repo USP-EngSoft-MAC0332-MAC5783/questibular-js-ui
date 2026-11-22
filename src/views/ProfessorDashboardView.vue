@@ -224,8 +224,15 @@ onMounted(loadLinkedStudents)
           Meus alunos
         </RouterLink>
         <span v-else class="simulados-nav-link" role="link" aria-disabled="true">Meus alunos</span>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Feedbacks</span>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+        <RouterLink
+          v-if="selectedStudent"
+          class="simulados-nav-link"
+          :to="{ name: 'teacher-feedbacks', params: { studentId: selectedStudent.id } }"
+        >
+          Feedbacks
+        </RouterLink>
+        <span v-else class="simulados-nav-link" role="link" aria-disabled="true">Feedbacks</span>
+        <RouterLink class="simulados-nav-link" :to="{ name: 'question-archive' }">Acervo de questões</RouterLink>
       </nav>
 
       <details class="simulados-user-menu">
@@ -344,7 +351,7 @@ onMounted(loadLinkedStudents)
             </p>
             <template v-else>
               <strong>{{ selectedStudent.name }}</strong>
-              <p>Nenhum feedback registrado para este aluno.</p>
+              <p>A consulta e o envio de feedbacks ainda não estão liberados.</p>
             </template>
           </aside>
         </section>

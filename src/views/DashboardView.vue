@@ -2,6 +2,8 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getMe, logout } from '@/services/auth'
+import AttemptScoreDialog from '@/components/AttemptScoreDialog.vue'
+import { scoreDisciplines } from '@/utils/scoreDisciplines'
 import {
   getExamResult,
   getLinkedStudents,
@@ -30,25 +32,6 @@ const isLoadingReview = ref(false)
 const selectedAttempt = ref(null)
 const selectedScoreAttempt = ref(null)
 let studentDashboardLoadSequence = 0
-const scoreDisciplines = [
-  { key: 'humanities', questionCountKey: 'questionCountHumanities', label: 'Ciências Humanas', focusLabel: 'Ciências Humanas' },
-  { key: 'nature', questionCountKey: 'questionCountNature', label: 'Ciências da Natureza', focusLabel: 'Ciências da Natureza' },
-  { key: 'languages', questionCountKey: 'questionCountLanguages', label: 'Linguagens', focusLabel: 'Linguagens e Códigos' },
-  { key: 'math', questionCountKey: 'questionCountMath', label: 'Matemática', focusLabel: 'Matemática' },
-]
-const scoreAreas = computed(() => {
-  const report = selectedScoreAttempt.value?.report
-  const summary = report?.summary
-  if (!report || !summary) return []
-
-  return scoreDisciplines
-    .filter(({ key }) => report[key] && summary[key] != null)
-    .map(area => ({
-      ...area,
-      correct: report.correctAnswers?.[area.key],
-      percentage: summary[area.key],
-    }))
-})
 const isTeacher = computed(() =>
   user.value?.roles?.some(role =>
     ['teacher', 'professor'].includes(String(role).toLowerCase())
@@ -160,58 +143,6 @@ async function getAllStudentExamHistory(studentId) {
     if (page.length < pageSize) return attempts
     offset += page.length
   }
-}
-
-function formatAttemptScore(value) {
-  const parsed = parseNumber(value)
-  return parsed === null
-    ? 'Não informado'
-    : `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(parsed)}%`
-}
-
-function attemptCorrectPercentage(item) {
-  return parseNumber(item?.report?.summary?.totalPercentage)
-}
-
-function attemptIncorrectPercentage(item) {
-  const correctPercentage = attemptCorrectPercentage(item)
-  return correctPercentage === null ? null : Math.max(0, 100 - correctPercentage)
-}
-
-function attemptElapsedSeconds(item) {
-  const startedAt = Date.parse(item?.report?.startedAt ?? '')
-  const finishAt = Date.parse(item?.report?.finishAt ?? '')
-  if (!Number.isFinite(startedAt) || !Number.isFinite(finishAt)) return null
-
-  const elapsed = Math.floor((finishAt - startedAt) / 1000)
-  return elapsed >= 0 ? elapsed : null
-}
-
-function formatAttemptDuration(item) {
-  const seconds = attemptElapsedSeconds(item)
-  if (seconds === null) return 'Não informado'
-
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const remainder = seconds % 60
-  if (hours) return `${hours}h ${minutes}min ${remainder}s`
-  if (minutes) return `${minutes}min ${remainder}s`
-  return `${remainder}s`
-}
-
-function formatAttemptAverageTime(item) {
-  const elapsed = attemptElapsedSeconds(item)
-  const questionCount = Number(item?.report?.questionCount)
-  if (elapsed === null || !questionCount) return 'Não informado'
-
-  const average = elapsed / questionCount
-  return `${new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 }).format(average)} s`
-}
-
-function formatAttemptDateTime(value) {
-  if (!value) return 'Não informado'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Não informado' : date.toLocaleString('pt-BR')
 }
 
 function openScore(item) {
@@ -402,12 +333,19 @@ onMounted(async () => {
           >
             Meus alunos
           </RouterLink>
-          <span class="simulados-nav-link" role="link" aria-disabled="true">Feedbacks</span>
-          <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+          <RouterLink
+            v-if="route.params.studentId"
+            class="simulados-nav-link"
+            :to="{ name: 'teacher-feedbacks', params: { studentId: route.params.studentId } }"
+          >
+            Feedbacks
+          </RouterLink>
+          <span v-else class="simulados-nav-link" role="link" aria-disabled="true">Feedbacks</span>
+          <RouterLink class="simulados-nav-link" :to="{ name: 'question-archive' }">Acervo de questões</RouterLink>
         </template>
         <template v-else>
           <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }" aria-current="page">Início</RouterLink>
-          <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+          <RouterLink class="simulados-nav-link" :to="{ name: 'question-archive' }">Acervo de questões</RouterLink>
           <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }">Simulados</RouterLink>
           <RouterLink class="simulados-nav-link" :to="{ name: 'desempenho' }">Meu desempenho</RouterLink>
         </template>
@@ -560,92 +498,12 @@ onMounted(async () => {
       </template>
     </main>
 
-    <div
+    <AttemptScoreDialog
       v-if="selectedScoreAttempt"
-      class="dashboard-score-modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="score-title"
-      @click.self="closeScore"
-    >
-      <section class="dashboard-score-panel">
-        <header>
-          <div>
-            <h2 id="score-title">{{ attemptTitle(selectedScoreAttempt) }}</h2>
-          </div>
-          <button type="button" class="dashboard-score-close" aria-label="Fechar pontuação" @click="closeScore">
-            <i class="bi bi-x-lg" aria-hidden="true"></i>
-          </button>
-        </header>
-
-        <div class="dashboard-score-sections">
-          <section class="simulado-real-result-card">
-            <h2>Seu desempenho</h2>
-            <p v-if="attemptCorrectPercentage(selectedScoreAttempt) !== null" class="simulado-real-result-lead">
-              {{ formatAttemptScore(attemptCorrectPercentage(selectedScoreAttempt)) }} de acertos
-            </p>
-            <p v-else class="simulado-real-result-lead">Relatório recebido</p>
-
-            <dl class="simulado-real-result-stats">
-              <div>
-                <dt>Acertos</dt>
-                <dd>{{ formatAttemptScore(attemptCorrectPercentage(selectedScoreAttempt)) }}</dd>
-              </div>
-              <div>
-                <dt>Erros</dt>
-                <dd>{{ formatAttemptScore(attemptIncorrectPercentage(selectedScoreAttempt)) }}</dd>
-              </div>
-              <div>
-                <dt>Tempo total</dt>
-                <dd>{{ formatAttemptDuration(selectedScoreAttempt) }}</dd>
-              </div>
-              <div>
-                <dt>Tempo médio por questão</dt>
-                <dd>{{ formatAttemptAverageTime(selectedScoreAttempt) }}</dd>
-              </div>
-              <div>
-                <dt>Questões respondidas</dt>
-                <dd>{{ selectedScoreAttempt.report?.questionCount ?? 'Não informado' }}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <section v-if="scoreAreas.length" class="simulado-real-result-card">
-            <h2>Desempenho por área</h2>
-            <dl class="simulado-real-result-categories">
-              <div v-for="area in scoreAreas" :key="area.key">
-                <dt>
-                  {{ area.label }}
-                  <span v-if="area.correct != null"> · {{ area.correct }} acertos</span>
-                </dt>
-                <dd>{{ formatAttemptScore(area.percentage) }}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <section class="simulado-real-result-card simulado-real-result-dates">
-            <h2>Período do simulado</h2>
-            <p>
-              Início:
-              <time v-if="selectedScoreAttempt.report?.startedAt" :datetime="selectedScoreAttempt.report.startedAt">
-                {{ formatAttemptDateTime(selectedScoreAttempt.report.startedAt) }}
-              </time>
-              <span v-else>Não informado</span>
-            </p>
-            <p>
-              Término:
-              <time v-if="selectedScoreAttempt.report?.finishAt" :datetime="selectedScoreAttempt.report.finishAt">
-                {{ formatAttemptDateTime(selectedScoreAttempt.report.finishAt) }}
-              </time>
-              <span v-else>Não informado</span>
-            </p>
-            <p v-if="selectedScoreAttempt.exam?.year">
-              Ano da prova: {{ selectedScoreAttempt.exam.year }}
-            </p>
-          </section>
-        </div>
-      </section>
-    </div>
+      :attempt="selectedScoreAttempt"
+      :title="attemptTitle(selectedScoreAttempt)"
+      @close="closeScore"
+    />
 
     <div v-if="review" class="desempenho-review" role="dialog" aria-modal="true" aria-labelledby="review-title">
       <section class="desempenho-review-panel">

@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getExamResult, getStudentExamResults } from '@/services/exams'
 import { logout } from '@/services/auth'
+import AttemptScoreDialog from '@/components/AttemptScoreDialog.vue'
 import '../assets/simulados.css'
 import '../assets/desempenho.css'
 
@@ -11,6 +12,7 @@ const history = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
 const selectedAttempt = ref(null)
+const selectedScoreAttempt = ref(null)
 const review = ref(null)
 const isLoadingReview = ref(false)
 
@@ -86,6 +88,14 @@ function formatDate(value) {
 
 function attemptTitle(item) {
   return item?.exam?.title || `ENEM ${item?.exam?.year || ''}`
+}
+
+function openScore(item) {
+  selectedScoreAttempt.value = item
+}
+
+function closeScore() {
+  selectedScoreAttempt.value = null
 }
 
 function disciplineLabel(item) {
@@ -233,7 +243,7 @@ onMounted(async () => {
 
       <nav class="simulados-nav" aria-label="Navegação do aluno">
         <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }">Início</RouterLink>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+        <RouterLink class="simulados-nav-link" :to="{ name: 'question-archive' }">Acervo de questões</RouterLink>
         <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }">Simulados</RouterLink>
         <RouterLink class="simulados-nav-link" :to="{ name: 'desempenho' }" aria-current="page">Meu desempenho</RouterLink>
       </nav>
@@ -338,13 +348,30 @@ onMounted(async () => {
             <strong class="desempenho-history-score">
               {{ formatPercentage(parsePercentage(item.report?.summary?.totalPercentage)) }}
             </strong>
-            <button type="button" :disabled="isLoadingReview" @click="openReview(item)">
-              {{ isLoadingReview && selectedAttempt === item ? 'Carregando...' : 'Ver revisão' }}
-            </button>
+            <div class="desempenho-history-actions">
+              <button
+                type="button"
+                class="desempenho-history-score-button"
+                :aria-label="`Ver pontuação de ${attemptTitle(item)}`"
+                @click="openScore(item)"
+              >
+                Pontuação
+              </button>
+              <button type="button" :disabled="isLoadingReview" @click="openReview(item)">
+                {{ isLoadingReview && selectedAttempt === item ? 'Carregando...' : 'Ver revisão' }}
+              </button>
+            </div>
           </article>
         </section>
       </template>
     </main>
+
+    <AttemptScoreDialog
+      v-if="selectedScoreAttempt"
+      :attempt="selectedScoreAttempt"
+      :title="attemptTitle(selectedScoreAttempt)"
+      @close="closeScore"
+    />
 
     <div v-if="review" class="desempenho-review" role="dialog" aria-modal="true" aria-labelledby="review-title">
       <section class="desempenho-review-panel">

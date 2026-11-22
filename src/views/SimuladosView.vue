@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { getAvailableExams, startExam } from '@/services/exams'
+import { getQuestionArchiveYears } from '@/services/questionArchive'
 import { logout } from '@/services/auth'
 import '../assets/simulados.css'
 
@@ -44,40 +45,58 @@ const selectedDisciplineNames = computed(() =>
 )
 const selectedDuration = computed(() => durations.find(option => option.value === duration.value))
 const selectedYear = computed(() => years.value.find(option => option.value === year.value))
+const selectedExam = computed(() =>
+  examsCatalog.value.find(item => String(item.year) === year.value)
+)
+const languageOptions = computed(() => {
+  const availableLanguages = selectedExam.value?.languages
+  if (!Array.isArray(availableLanguages)) return []
+
+  const labels = {
+    english: 'Inglês',
+    ingles: 'Inglês',
+    spanish: 'Espanhol',
+    espanhol: 'Espanhol',
+  }
+
+  return [...new Set(availableLanguages
+    .filter(language => typeof language === 'string' && language.trim())
+    .map(language => language.trim()))]
+    .map(value => ({
+      value,
+      label: labels[value.toLowerCase()] || value,
+    }))
+})
+const selectedLanguage = computed(() => {
+  if (!selectedDisciplines.value.languages) return null
+  return languageOptions.value.find(option => option.value === language.value)?.value ?? null
+})
 const selectedDisciplineCount = computed(() =>
   Object.values(selectedDisciplines.value).filter(Boolean).length
 )
 const totalQuestionCount = computed(() => questionCount.value)
-const selectedExamCapacity = computed(() => {
-  const exam = examsCatalog.value.find(item => String(item.year) === year.value)
-  if (!exam) return 0
+const disciplineQuestionCountFields = {
+  humanities: 'questionCountHumanities',
+  nature: 'questionCountNature',
+  languages: 'questionCountLanguages',
+  math: 'questionCountMath',
+}
 
-  const capacities = {
-    humanities: Number(exam.questionCountHumanities ?? 0),
-    nature: Number(exam.questionCountNature ?? 0),
-    languages: Number(exam.questionCountLanguages ?? 0),
-    math: Number(exam.questionCountMath ?? 0),
-  }
+function getDisciplineQuestionCount(id) {
+  const field = disciplineQuestionCountFields[id]
+  return field ? Number(selectedExam.value?.[field] ?? 0) : 0
+}
 
-  return disciplines
+const selectedExamCapacity = computed(() =>
+  disciplines
     .filter(option => selectedDisciplines.value[option.id])
-    .reduce((total, option) => total + capacities[option.id], 0)
-})
+    .reduce((total, option) => total + getDisciplineQuestionCount(option.id), 0)
+)
 
 const selectedAreaMaximum = computed(() => {
   if (selectedDisciplineCount.value !== 1) return 0
-
-  const exam = examsCatalog.value.find(item => String(item.year) === year.value)
-  if (!exam) return 0
-
   const selectedId = disciplines.find(option => selectedDisciplines.value[option.id])?.id
-  const capacities = {
-    humanities: Number(exam.questionCountHumanities ?? 0),
-    nature: Number(exam.questionCountNature ?? 0),
-    languages: Number(exam.questionCountLanguages ?? 0),
-    math: Number(exam.questionCountMath ?? 0),
-  }
-  return selectedId ? capacities[selectedId] : 0
+  return selectedId ? getDisciplineQuestionCount(selectedId) : 0
 })
 
 const questionCounts = computed(() => {
@@ -160,6 +179,12 @@ watch(questionCounts, available => {
   }
 })
 
+watch(languageOptions, options => {
+  if (options.length && !options.some(option => option.value === language.value)) {
+    language.value = options[0].value
+  }
+})
+
 function readSessionUser() {
   try {
     return JSON.parse(localStorage.getItem('@Questibular:user') || 'null')
@@ -181,10 +206,20 @@ async function handleLogout() {
 
 onMounted(async () => {
   try {
-    const catalog = await getAvailableExams(2018, 2025)
+    const availableYears = await getQuestionArchiveYears()
+    if (!availableYears.length) {
+      throw new Error('A API do ENEM não informou anos de prova disponíveis.')
+    }
+
+    const catalog = await getAvailableExams(
+      Math.min(...availableYears),
+      Math.max(...availableYears)
+    )
+    const availableYearSet = new Set(availableYears.map(String))
     examsCatalog.value = (catalog.exams ?? [])
       .filter(exam =>
         exam?.year
+        && availableYearSet.has(String(exam.year))
         && (
           Number(exam.questionCountHumanities ?? 0)
           + Number(exam.questionCountNature ?? 0)
@@ -197,14 +232,7 @@ onMounted(async () => {
       .sort((a, b) => Number(b.value) - Number(a.value))
 
     if (!years.value.length) {
-      years.value = [
-        { value: '2023', label: '2023' },
-        { value: '2022', label: '2022' },
-        { value: '2021', label: '2021' },
-        { value: '2020', label: '2020' },
-        { value: '2019', label: '2019' },
-        { value: '2018', label: '2018' },
-      ]
+      throw new Error('Não há simulados disponíveis nos anos retornados pela API do ENEM.')
     }
     year.value = years.value[0].value
     const focusArea = route.query.area
@@ -219,24 +247,10 @@ onMounted(async () => {
       questionCount.value = 20
     }
   } catch (error) {
-    examsCatalog.value = [
-      { year: '2023', questionCountHumanities: 55, questionCountNature: 34, questionCountLanguages: 49, questionCountMath: 45 },
-      { year: '2022', questionCountHumanities: 50, questionCountNature: 43, questionCountLanguages: 48, questionCountMath: 44 },
-      { year: '2021', questionCountHumanities: 56, questionCountNature: 41, questionCountLanguages: 45, questionCountMath: 43 },
-      { year: '2020', questionCountHumanities: 49, questionCountNature: 45, questionCountLanguages: 48, questionCountMath: 40 },
-      { year: '2019', questionCountHumanities: 50, questionCountNature: 39, questionCountLanguages: 48, questionCountMath: 44 },
-      { year: '2018', questionCountHumanities: 50, questionCountNature: 43, questionCountLanguages: 49, questionCountMath: 42 },
-    ]
-    years.value = [
-      { value: '2023', label: '2023' },
-      { value: '2022', label: '2022' },
-      { value: '2021', label: '2021' },
-      { value: '2020', label: '2020' },
-      { value: '2019', label: '2019' },
-      { value: '2018', label: '2018' },
-    ]
-    year.value = years.value[0].value
-    errorMessage.value = `Não foi possível atualizar a lista de anos: ${error.message}`
+    examsCatalog.value = []
+    years.value = []
+    year.value = ''
+    errorMessage.value = `Não foi possível carregar a lista de anos: ${error.message}`
   } finally {
     isLoadingYears.value = false
   }
@@ -281,7 +295,7 @@ async function handleStart() {
       year: year.value,
       timeInMinutes: duration.value,
       questionCount: totalQuestionCount.value,
-      language: language.value,
+      language: selectedLanguage.value,
       ...selectedDisciplines.value,
       anonymous: false,
     })
@@ -318,7 +332,7 @@ async function handleStart() {
 
       <nav class="simulados-nav" aria-label="Navegação do aluno">
         <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }">Início</RouterLink>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
+        <RouterLink class="simulados-nav-link" :to="{ name: 'question-archive' }">Acervo de questões</RouterLink>
         <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }" aria-current="page">Simulados</RouterLink>
         <RouterLink class="simulados-nav-link" :to="{ name: 'desempenho' }">Meu desempenho</RouterLink>
       </nav>
@@ -373,16 +387,18 @@ async function handleStart() {
                   @change="toggleDiscipline(option.id, $event)"
                 />
                 <span class="simulados-discipline-title">{{ option.title }}</span>
-                <span class="simulados-discipline-description">45 questões no ENEM</span>
+                <span class="simulados-discipline-description">
+                  {{ selectedYear ? getDisciplineQuestionCount(option.id) : '—' }} questões nesta prova
+                </span>
               </label>
             </div>
           </fieldset>
 
-          <fieldset v-if="selectedDisciplines.languages" class="simulados-fieldset">
+          <fieldset v-if="selectedDisciplines.languages && languageOptions.length" class="simulados-fieldset">
             <legend>Idioma da prova de Linguagens</legend>
             <div class="simulados-choices">
               <label
-                v-for="option in [{ value: 'ingles', label: 'Inglês' }, { value: 'espanhol', label: 'Espanhol' }]"
+                v-for="option in languageOptions"
                 :key="option.value"
                 class="simulados-choice"
                 :class="{ 'is-selected': language === option.value }"
