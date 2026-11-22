@@ -176,6 +176,9 @@
   font-weight: 700;
   text-align: right;
   text-decoration: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
 }
 
 .dashboard-study-empty {

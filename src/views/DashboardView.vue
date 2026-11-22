@@ -2,9 +2,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getMe, logout } from '@/services/auth'
-import { getStudentExamHistory, getStudentScore } from '@/services/exams'
+import { getExamResult, getStudentExamHistory, getStudentScore } from '@/services/exams'
 import '../assets/simulados.css'
 import '../assets/dashboard.css'
+import '../assets/desempenho.css'
 
 const router = useRouter()
 const user = ref(null)
@@ -12,6 +13,9 @@ const score = ref(null)
 const history = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
+const review = ref(null)
+const isLoadingReview = ref(false)
+const selectedAttempt = ref(null)
 
 const userName = computed(() => user.value?.name?.trim() || 'Aluno')
 const userInitial = computed(() =>
@@ -93,6 +97,69 @@ function attemptTitle(item) {
 
 function attemptPercentage(item) {
   return formatNumber(item?.report?.summary?.totalPercentage)
+}
+
+function selectedLetter(question) {
+  const selected = question?.selectedAlternative
+  if (typeof selected === 'string') {
+    return selected.trim().toUpperCase() || ''
+  }
+  if (selected && typeof selected === 'object') {
+    return String(selected.letter ?? '').trim().toUpperCase()
+  }
+  return ''
+}
+
+function normalizeReviewQuestions(questions) {
+  return (questions ?? []).map(question => {
+    const letter = selectedLetter(question)
+    return {
+      ...question,
+      selectedAlternative: letter ? { letter } : null,
+      isCorrect:
+        typeof question.isCorrect === 'boolean'
+          ? question.isCorrect
+          : Boolean(letter && String(question.correctAlternative).toUpperCase() === letter),
+    }
+  })
+}
+
+async function openReview(item) {
+  const attemptId = item?.attemptId || item?.exam?.id
+  if (!attemptId) {
+    errorMessage.value = 'Não foi possível identificar este simulado.'
+    return
+  }
+
+  selectedAttempt.value = item
+  isLoadingReview.value = true
+  errorMessage.value = ''
+  try {
+    const response = await getExamResult(attemptId, 50, 0)
+    review.value = {
+      attemptId,
+      summary: item,
+      details: response,
+      questions: normalizeReviewQuestions(response.questions),
+    }
+  } catch (error) {
+    errorMessage.value = error.message || 'Não foi possível carregar o resultado.'
+  } finally {
+    isLoadingReview.value = false
+  }
+}
+
+async function loadMoreReviewQuestions() {
+  if (!review.value?.details?.metadata?.hasMore) return
+  const offset = review.value.questions.length
+  const response = await getExamResult(review.value.attemptId, 50, offset)
+  review.value.questions.push(...normalizeReviewQuestions(response.questions))
+  review.value.details.metadata = response.metadata
+}
+
+function closeReview() {
+  review.value = null
+  selectedAttempt.value = null
 }
 
 async function handleLogout() {
@@ -201,12 +268,14 @@ onMounted(async () => {
                       <span v-if="attemptPercentage(item) !== '0%'"> · {{ attemptPercentage(item) }} de acertos</span>
                     </p>
                   </div>
-                  <RouterLink
+                  <button
                     class="dashboard-study-review"
-                    :to="{ name: 'desempenho' }"
+                    type="button"
+                    :disabled="isLoadingReview"
+                    @click="openReview(item)"
                   >
-                    Revisar
-                  </RouterLink>
+                    {{ isLoadingReview && selectedAttempt === item ? 'Carregando...' : 'Revisar' }}
+                  </button>
                 </article>
               </div>
 
@@ -239,5 +308,78 @@ onMounted(async () => {
         </section>
       </template>
     </main>
+
+    <div v-if="review" class="desempenho-review" role="dialog" aria-modal="true" aria-labelledby="review-title">
+      <section class="desempenho-review-panel">
+        <header>
+          <div>
+            <h2 id="review-title">{{ attemptTitle(review.summary) }}</h2>
+            <p>Revisão das respostas e gabaritos</p>
+          </div>
+          <button type="button" class="desempenho-review-close" aria-label="Fechar revisão" @click="closeReview">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <div class="desempenho-review-list">
+          <article v-for="question in review.questions" :key="question.index" class="desempenho-review-question">
+            <div class="desempenho-review-question-heading">
+              <strong>{{ question.title || `Questão ${question.index}` }}</strong>
+              <span :class="question.isCorrect ? 'is-correct' : 'is-wrong'">
+                {{ question.isCorrect ? 'Acertou' : 'Errou' }}
+              </span>
+            </div>
+
+            <p v-if="!question.isCorrect" class="desempenho-answer-summary">
+              Sua resposta: <b>{{ question.selectedAlternative?.letter || 'Não respondida' }}</b>
+              <span aria-hidden="true"> · </span>
+              Resposta correta: <b>{{ question.correctAlternative || 'Não informada' }}</b>
+            </p>
+
+            <p v-if="question.context" class="desempenho-question-context">{{ question.context }}</p>
+
+            <figure v-for="file in question.files ?? []" :key="file">
+              <img :src="file" :alt="`Imagem da questão ${question.index}`" />
+            </figure>
+
+            <ul class="desempenho-review-alternatives">
+              <li
+                v-for="alternative in question.alternatives ?? []"
+                :key="alternative.letter"
+                :class="{
+                  'is-selected': question.selectedAlternative?.letter === alternative.letter,
+                  'is-correct': question.correctAlternative === alternative.letter,
+                }"
+              >
+                <b>{{ alternative.letter }}</b>
+                <span>
+                  {{ alternative.text || 'Alternativa com imagem' }}
+                  <small
+                    v-if="question.correctAlternative === alternative.letter"
+                    class="desempenho-answer-label is-correct-label"
+                  >
+                    Resposta correta
+                  </small>
+                  <small
+                    v-if="question.selectedAlternative?.letter === alternative.letter"
+                    class="desempenho-answer-label"
+                    :class="question.correctAlternative === alternative.letter ? 'is-correct-label' : 'is-selected-label'"
+                  >
+                    Sua resposta
+                  </small>
+                </span>
+                <img v-if="alternative.file" :src="alternative.file" :alt="`Alternativa ${alternative.letter}`" />
+              </li>
+            </ul>
+          </article>
+        </div>
+
+        <footer v-if="review.details?.metadata?.hasMore">
+          <button type="button" class="btn btn-qb" @click="loadMoreReviewQuestions">
+            Carregar próximas questões
+          </button>
+        </footer>
+      </section>
+    </div>
   </div>
 </template>
