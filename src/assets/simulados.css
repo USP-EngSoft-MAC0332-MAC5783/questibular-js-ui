@@ -91,6 +91,74 @@ a.simulados-nav-link:hover {
   padding: 0 8px;
 }
 
+.simulados-user-menu {
+  position: relative;
+  margin-top: auto;
+}
+
+.simulados-user-menu summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.simulados-user-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.simulados-user-menu > summary {
+  width: 100%;
+  padding: 8px;
+  border-radius: 14px;
+}
+
+.simulados-user-menu > summary:hover,
+.simulados-user-menu[open] > summary {
+  background: var(--qb-pill-bg);
+}
+
+.simulados-user-menu > summary > .bi {
+  margin-left: auto;
+  color: var(--qb-muted);
+  transition: transform 150ms ease;
+}
+
+.simulados-user-menu[open] > summary > .bi {
+  transform: rotate(180deg);
+}
+
+.simulados-user-actions {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  left: 0;
+  padding: 7px;
+  background: #fff;
+  border: 1px solid var(--qb-card-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 28px rgb(17 24 39 / 12%);
+}
+
+.simulados-user-actions button,
+.profile-menu-actions button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 12px;
+  color: #c93a4d;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.simulados-user-actions button:hover,
+.profile-menu-actions button:hover {
+  background: #fff1f3;
+}
+
 .simulados-user-avatar {
   display: inline-flex;
   flex-shrink: 0;

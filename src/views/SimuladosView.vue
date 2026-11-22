@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getAvailableExams, startExam } from '@/services/exams'
+import { logout } from '@/services/auth'
 import '../assets/simulados.css'
 
 const router = useRouter()
@@ -62,20 +63,42 @@ const selectedExamCapacity = computed(() => {
     .reduce((total, option) => total + capacities[option.id], 0)
 })
 
+const selectedAreaMaximum = computed(() => {
+  if (selectedDisciplineCount.value !== 1) return 0
+
+  const exam = examsCatalog.value.find(item => String(item.year) === year.value)
+  if (!exam) return 0
+
+  const selectedId = disciplines.find(option => selectedDisciplines.value[option.id])?.id
+  const capacities = {
+    humanities: Number(exam.questionCountHumanities ?? 0),
+    nature: Number(exam.questionCountNature ?? 0),
+    languages: Number(exam.questionCountLanguages ?? 0),
+    math: Number(exam.questionCountMath ?? 0),
+  }
+  return selectedId ? capacities[selectedId] : 0
+})
+
 const questionCounts = computed(() => {
   const capacity = selectedExamCapacity.value
   const fixedValues = selectedDisciplineCount.value === 2
     ? [10, 20, 45, 60, 70]
-    : [10, 20, 45]
+    : [10, 20]
 
   const availableValues = fixedValues
     .filter(value => value <= capacity)
-    .map(value => ({
-      value,
-      label: value === 45 && selectedDisciplineCount.value === 1
-        ? '45 (como no ENEM)'
-        : String(value),
-    }))
+    .map(value => ({ value, label: String(value) }))
+
+  if (
+    selectedDisciplineCount.value === 1
+    && selectedAreaMaximum.value > 20
+    && !availableValues.some(option => option.value === selectedAreaMaximum.value)
+  ) {
+    availableValues.push({
+      value: selectedAreaMaximum.value,
+      label: `${selectedAreaMaximum.value} (como no ENEM)`,
+    })
+  }
 
   if (
     selectedDisciplineCount.value === 2
@@ -149,6 +172,11 @@ const userName = user?.name?.trim() || 'Aluno'
 const userInitial = userName.charAt(0).toLocaleUpperCase('pt-BR')
 const userRole = user?.roles?.includes('teacher') ? 'Professor' : 'Aluno'
 const canStart = computed(() => user?.roles?.includes('student') === true)
+
+async function handleLogout() {
+  await logout()
+  await router.push({ name: 'home' })
+}
 
 onMounted(async () => {
   try {
@@ -284,13 +312,22 @@ async function handleStart() {
         <span class="simulados-nav-link" role="link" aria-disabled="true">Meu desempenho</span>
       </nav>
 
-      <div class="simulados-user">
-        <span class="simulados-user-avatar" aria-hidden="true">{{ userInitial }}</span>
-        <div class="simulados-user-details">
-          <span class="simulados-user-name">{{ userName }}</span>
-          <span class="simulados-user-role">{{ userRole }}</span>
+      <details class="simulados-user-menu">
+        <summary class="simulados-user">
+          <span class="simulados-user-avatar" aria-hidden="true">{{ userInitial }}</span>
+          <span class="simulados-user-details">
+            <span class="simulados-user-name">{{ userName }}</span>
+            <span class="simulados-user-role">{{ userRole }}</span>
+          </span>
+          <i class="bi bi-chevron-up" aria-hidden="true"></i>
+        </summary>
+        <div class="simulados-user-actions">
+          <button type="button" @click="handleLogout">
+            <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+            Sair do login
+          </button>
         </div>
-      </div>
+      </details>
     </aside>
 
     <main class="simulados-main">

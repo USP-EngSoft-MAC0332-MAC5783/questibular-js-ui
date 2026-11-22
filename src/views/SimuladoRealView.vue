@@ -318,6 +318,10 @@ onBeforeUnmount(() => {
   <div v-else-if="examState" class="simulado-real-page">
     <header class="simulado-real-header">
       <div class="simulado-real-heading">
+        <RouterLink class="brand simulado-real-brand" :to="{ name: 'home' }" aria-label="Questibular — página inicial">
+          <span class="brand-mark" aria-hidden="true">Q</span>
+          <span class="brand-name">Questibular</span>
+        </RouterLink>
         <RouterLink class="simulado-real-exit" :to="{ name: 'simulados' }">
           <span aria-hidden="true">←</span> Voltar às configurações
         </RouterLink>

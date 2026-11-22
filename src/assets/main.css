@@ -11,6 +11,246 @@
   --qb-card-border: #eceef5;
 }
 
+:root[data-theme='dark'] {
+  --qb-blue: #6f91ff;
+  --qb-blue-hover: #597af0;
+  --qb-bg: #0b1020;
+  --qb-text: #f4f7ff;
+  --qb-muted: #adb6ce;
+  --qb-pill-bg: #17284f;
+  --qb-icon-bg: #17284f;
+  --qb-card-border: #25304a;
+  color-scheme: dark;
+}
+
+.theme-toggle {
+  position: fixed;
+  z-index: 1100;
+  right: 24px;
+  bottom: 24px;
+  display: inline-flex;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #fff;
+  background: var(--qb-blue);
+  border: 2px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  box-shadow: 0 10px 28px rgb(17 24 39 / 24%);
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+  background: var(--qb-blue-hover);
+  outline: 3px solid rgb(111 145 255 / 25%);
+  outline-offset: 3px;
+}
+
+:root[data-theme='dark'] body {
+  background: #0b1020;
+  color: #f4f7ff;
+}
+
+:root[data-theme='dark'] .role-card,
+:root[data-theme='dark'] .dashboard-card,
+:root[data-theme='dark'] .card,
+:root[data-theme='dark'] .login-card,
+:root[data-theme='dark'] .simulados-sidebar,
+:root[data-theme='dark'] .simulados-summary,
+:root[data-theme='dark'] .simulados-discipline,
+:root[data-theme='dark'] .simulados-choice,
+:root[data-theme='dark'] .simulado-real-question,
+:root[data-theme='dark'] .simulado-real-question-panel,
+:root[data-theme='dark'] .simulado-real-result-card,
+:root[data-theme='dark'] .simulado-real-header,
+:root[data-theme='dark'] .simulado-real-alternative,
+:root[data-theme='dark'] .simulado-real-question-number {
+  background: #11182a;
+  color: #f4f7ff;
+  border-color: #25304a;
+}
+
+:root[data-theme='dark'] .simulados-page,
+:root[data-theme='dark'] .simulado-real-page,
+:root[data-theme='dark'] .dashboard-page,
+:root[data-theme='dark'] .home-page {
+  background: #0b1020;
+  color: #f4f7ff;
+}
+
+:root[data-theme='dark'] .text-muted,
+:root[data-theme='dark'] .hero-lead,
+:root[data-theme='dark'] .role-card p,
+:root[data-theme='dark'] .simulados-heading p,
+:root[data-theme='dark'] .simulados-discipline-description,
+:root[data-theme='dark'] .simulados-summary dt,
+:root[data-theme='dark'] .simulados-summary-footer p,
+:root[data-theme='dark'] .simulado-real-question-panel > p,
+:root[data-theme='dark'] .simulado-real-result-dates p {
+  color: #adb6ce !important;
+}
+
+:root[data-theme='dark'] .student-login,
+:root[data-theme='dark'] .professor-login {
+  --login-background: #0b1020;
+  --login-text: #f4f7ff;
+  --login-muted: #adb6ce;
+  --login-border: #25304a;
+}
+
+:root[data-theme='dark'] .student-login .login-card,
+:root[data-theme='dark'] .professor-login .login-card,
+:root[data-theme='dark'] .student-login .form-field input,
+:root[data-theme='dark'] .professor-login .form-field input {
+  background: #11182a;
+  color: #f4f7ff;
+  border-color: #25304a;
+}
+
+:root[data-theme='dark'] .professor-signup .verification-panel {
+  background: #17284f;
+}
+
+:root[data-theme='dark'] .professor-signup .personal-data h3,
+:root[data-theme='dark'] .professor-signup .verification-description,
+:root[data-theme='dark'] .professor-signup .upload-description,
+:root[data-theme='dark'] .student-signup .login-description,
+:root[data-theme='dark'] .professor-signup .description {
+  color: #adb6ce;
+}
+
+:root[data-theme='dark'] .professor-signup .upload-box {
+  background: #11182a;
+}
+
+:root[data-theme='dark'] .simulados-user-actions,
+:root[data-theme='dark'] .profile-menu-actions {
+  background: #11182a;
+  border-color: #25304a;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 36%);
+}
+
+:root[data-theme='dark'] .simulados-user-actions button,
+:root[data-theme='dark'] .profile-menu-actions button {
+  color: #ff7d8d;
+}
+
+:root[data-theme='dark'] .simulados-user-actions button:hover,
+:root[data-theme='dark'] .profile-menu-actions button:hover {
+  background: #2a1720;
+}
+
+:root[data-theme='dark'] .simulados-user-menu[open] .simulados-user-name,
+:root[data-theme='dark'] .simulados-user-menu[open] .simulados-user-role,
+:root[data-theme='dark'] .simulados-user-menu .simulados-user-name,
+:root[data-theme='dark'] .simulados-user-menu .simulados-user-role {
+  color: #f4f7ff !important;
+}
+
+:root[data-theme='dark'] .simulados-user-menu[open] > summary,
+:root[data-theme='dark'] .simulados-user-menu > summary:hover {
+  background: #eaf0ff;
+}
+
+:root[data-theme='dark'] .simulados-user-menu[open] > summary .simulados-user-name,
+:root[data-theme='dark'] .simulados-user-menu[open] > summary .simulados-user-role,
+:root[data-theme='dark'] .simulados-user-menu > summary:hover .simulados-user-name,
+:root[data-theme='dark'] .simulados-user-menu > summary:hover .simulados-user-role {
+  color: #17203a !important;
+}
+
+:root[data-theme='dark'] h1,
+:root[data-theme='dark'] h2,
+:root[data-theme='dark'] h3,
+:root[data-theme='dark'] h4,
+:root[data-theme='dark'] h5,
+:root[data-theme='dark'] h6,
+:root[data-theme='dark'] legend,
+:root[data-theme='dark'] dt,
+:root[data-theme='dark'] dd,
+:root[data-theme='dark'] label,
+:root[data-theme='dark'] .brand-name,
+:root[data-theme='dark'] .entry-title,
+:root[data-theme='dark'] .simulados-heading h1,
+:root[data-theme='dark'] .simulados-fieldset legend,
+:root[data-theme='dark'] .simulados-summary h2,
+:root[data-theme='dark'] .simulados-summary dd,
+:root[data-theme='dark'] .simulado-real-heading h1,
+:root[data-theme='dark'] .simulado-real-question h2,
+:root[data-theme='dark'] .simulado-real-question-panel h2,
+:root[data-theme='dark'] .simulado-real-result-card h2,
+:root[data-theme='dark'] .simulado-real-result-stats dd,
+:root[data-theme='dark'] .simulado-real-result-categories dd,
+:root[data-theme='dark'] .dashboard-card,
+:root[data-theme='dark'] .login-card h2,
+:root[data-theme='dark'] .login-card label {
+  color: #f4f7ff !important;
+}
+
+:root[data-theme='dark'] .simulado-real-timer span,
+:root[data-theme='dark'] .simulado-real-timer strong {
+  color: #17203a;
+}
+
+:root[data-theme='dark'] .simulado-real-alternative.is-selected {
+  background: #17284f;
+  border-color: #6f91ff;
+  box-shadow: inset 0 0 0 1px #6f91ff;
+  color: #f4f7ff;
+}
+
+:root[data-theme='dark'] .simulado-real-alternative.is-selected .simulado-real-letter {
+  color: #fff;
+  background: #6f91ff;
+}
+
+:root[data-theme='dark'] .simulado-real-question-number.is-answered {
+  color: #dbe5ff;
+  background: #17284f;
+  border-color: #6f91ff;
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .simulado-real-question-number.is-current {
+  color: #fff;
+  background: #6f91ff;
+  border-color: #9bb1ff;
+}
+
+:root[data-theme='dark'] .simulados-discipline.is-selected {
+  color: #f4f7ff;
+  background: #17284f;
+  border-color: #6f91ff;
+  box-shadow: inset 0 0 0 1px #6f91ff;
+}
+
+:root[data-theme='dark'] .simulados-discipline.is-selected .simulados-discipline-description {
+  color: #dbe5ff !important;
+}
+
+:root[data-theme='dark'] .simulados-choice.is-selected {
+  color: #fff;
+  background: #6f91ff;
+  border-color: #9bb1ff;
+  box-shadow: inset 0 0 0 1px #9bb1ff;
+}
+
+:root[data-theme='dark'] .brand-mark {
+  background: #ffb21f;
+  color: #17203a;
+  border: 1px solid rgb(255 178 31 / 65%);
+}
+
+:root:not([data-theme='dark']) .brand-mark,
+:root:not([data-theme='dark']) .marca__icone {
+  background: var(--qb-blue);
+  color: #fff;
+}
+
 html,
 body,
 #app {
