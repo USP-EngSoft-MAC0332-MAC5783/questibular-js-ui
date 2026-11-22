@@ -86,3 +86,38 @@ export function getStudentExamResults(studentId, limit = 50, offset = 0) {
 export function getStudentScore() {
   return request('', { baseUrl: '/api/v1/users/score' })
 }
+
+export function getLinkedStudents() {
+  return request('', { baseUrl: '/api/v1/teachers/students' })
+}
+
+export function linkStudent(studentId) {
+  const token = localStorage.getItem('@Questibular:token')
+  if (!token) {
+    throw new Error('Faça login como professor para vincular um aluno.')
+  }
+  return fetch(`/api/v1/teachers/students/${encodeURIComponent(studentId)}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  }).then(async response => {
+    if (response.status === 204) return true
+    const data = await response.json().catch(() => null)
+    if (!response.ok) {
+      throw new Error(data?.detail || data?.title || `Não foi possível vincular o aluno (HTTP ${response.status}).`)
+    }
+    return true
+  })
+}
+
+export function getStudentScoreById(studentId) {
+  return request(`/${encodeURIComponent(studentId)}`, {
+    baseUrl: '/api/v1/users/score',
+  })
+}
+
+export function getAvailableStudents() {
+  return request('/list', { baseUrl: '/api/v1/users' })
+}
