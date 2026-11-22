@@ -5,6 +5,7 @@ import LoginProfessorView from '@/views/LoginProfessorView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import CadastroAlunoView from '@/views/CadastroAlunoView.vue'
 import CadastroProfessorView from '@/views/CadastroProfessorView.vue'
+import SimuladosView from '@/views/SimuladosView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,12 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/simulados',
+      name: 'simulados',
+      component: SimuladosView,
       meta: { requiresAuth: true }
     },
     {

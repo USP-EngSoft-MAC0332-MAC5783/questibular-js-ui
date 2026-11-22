@@ -80,7 +80,7 @@ const handleLogout = async () => {
           </div>
 
           <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
-            <button class="btn btn-qb px-4">Começar a estudar</button>
+            <RouterLink class="btn btn-qb px-4" :to="{ name: 'simulados' }">Começar a estudar</RouterLink>
           </div>
         </div>
       </div>
