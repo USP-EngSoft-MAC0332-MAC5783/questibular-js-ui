@@ -82,3 +82,7 @@ export function getExamResult(attemptId, limit = 50, offset = 0) {
 export function getStudentExamResults(studentId, limit = 50, offset = 0) {
   return getStudentExamHistory(studentId, limit, offset)
 }
+
+export function getStudentScore() {
+  return request('', { baseUrl: '/api/v1/users/score' })
+}
