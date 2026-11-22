@@ -8,6 +8,8 @@ import CadastroProfessorView from '@/views/CadastroProfessorView.vue'
 import SimuladosView from '@/views/SimuladosView.vue'
 import SimuladoRealView from '@/views/SimuladoRealView.vue'
 import DesempenhoView from '@/views/DesempenhoView.vue'
+import QuestionArchiveView from '@/views/QuestionArchiveView.vue'
+import TeacherFeedbackView from '@/views/TeacherFeedbackView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +18,12 @@ const router = createRouter({
       path: '/dashboard/aluno/:studentId',
       name: 'student-dashboard',
       component: DashboardView,
+      meta: { requiresAuth: true, requiresTeacher: true }
+    },
+    {
+      path: '/feedbacks/:studentId',
+      name: 'teacher-feedbacks',
+      component: TeacherFeedbackView,
       meta: { requiresAuth: true, requiresTeacher: true }
     },
     {
@@ -46,6 +54,12 @@ const router = createRouter({
       name: 'desempenho',
       component: DesempenhoView,
       meta: { requiresAuth: true, requiresStudent: true }
+    },
+    {
+      path: '/acervo-questoes',
+      name: 'question-archive',
+      component: QuestionArchiveView,
+      meta: { requiresAuth: true }
     },
     {
       path: '/login/aluno',
