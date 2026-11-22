@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { getMe, logout } from '@/services/auth'
 import { getExamResult, getStudentExamHistory, getStudentScore } from '@/services/exams'
+import ProfessorDashboardView from '@/views/ProfessorDashboardView.vue'
 import '../assets/simulados.css'
 import '../assets/dashboard.css'
 import '../assets/desempenho.css'
@@ -16,6 +17,11 @@ const errorMessage = ref('')
 const review = ref(null)
 const isLoadingReview = ref(false)
 const selectedAttempt = ref(null)
+const isTeacher = computed(() =>
+  user.value?.roles?.some(role =>
+    ['teacher', 'professor'].includes(String(role).toLowerCase())
+  )
+)
 
 const userName = computed(() => user.value?.name?.trim() || 'Aluno')
 const userInitial = computed(() =>
@@ -170,6 +176,13 @@ async function handleLogout() {
 onMounted(async () => {
   try {
     user.value = await getMe()
+    const isProfessor = user.value?.roles?.some(role =>
+      ['teacher', 'professor'].includes(String(role).toLowerCase())
+    )
+    if (isProfessor) {
+      isLoading.value = false
+      return
+    }
     const [scoreResponse, historyResponse] = await Promise.all([
       getStudentScore(),
       getStudentExamHistory(user.value.id, 3, 0),
@@ -185,7 +198,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dashboard-page dashboard-shell">
+  <ProfessorDashboardView v-if="isTeacher" :user="user" @logout="handleLogout" />
+
+  <div v-else class="dashboard-page dashboard-shell">
     <aside class="simulados-sidebar" aria-label="Menu principal">
       <RouterLink class="brand" :to="{ name: 'home' }" aria-label="Questibular — página inicial">
         <span class="brand-mark" aria-hidden="true">Q</span>
