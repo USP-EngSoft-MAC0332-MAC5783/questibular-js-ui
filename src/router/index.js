@@ -6,6 +6,7 @@ import DashboardView from '@/views/DashboardView.vue'
 import CadastroAlunoView from '@/views/CadastroAlunoView.vue'
 import CadastroProfessorView from '@/views/CadastroProfessorView.vue'
 import SimuladosView from '@/views/SimuladosView.vue'
+import SimuladoRealView from '@/views/SimuladoRealView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +27,12 @@ const router = createRouter({
       name: 'simulados',
       component: SimuladosView,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/simulados/real/:id',
+      name: 'simulado-real',
+      component: SimuladoRealView,
+      meta: { requiresAuth: true, requiresStudent: true }
     },
     {
       path: '/login/aluno',
@@ -68,6 +75,18 @@ router.beforeEach((to, from, next) => {
     next({ name: 'login-aluno' })
   } else if (to.meta.guestOnly && isAuthenticated) {
     next({ name: 'dashboard' })
+  } else if (to.meta.requiresStudent) {
+    let user = null
+    try {
+      user = JSON.parse(localStorage.getItem('@Questibular:user') || 'null')
+    } catch {
+      user = null
+    }
+    if (!user?.roles?.includes('student')) {
+      next({ name: 'dashboard' })
+    } else {
+      next()
+    }
   } else {
     next()
   }
