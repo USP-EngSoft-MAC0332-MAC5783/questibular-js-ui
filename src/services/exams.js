@@ -79,6 +79,12 @@ export function getExamResult(attemptId, limit = 50, offset = 0) {
   return request(`/${encodeURIComponent(attemptId)}/results?limit=${limit}&offset=${offset}`)
 }
 
+export function getTeacherExamResult(attemptId, limit = 50, offset = 0) {
+  return request(`/${encodeURIComponent(attemptId)}/results?limit=${limit}&offset=${offset}`, {
+    baseUrl: '/api/v1/teachers/exams',
+  })
+}
+
 export function getStudentExamResults(studentId, limit = 50, offset = 0) {
   return getStudentExamHistory(studentId, limit, offset)
 }

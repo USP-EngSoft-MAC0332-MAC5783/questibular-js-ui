@@ -13,6 +13,12 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/dashboard/aluno/:studentId',
+      name: 'student-dashboard',
+      component: DashboardView,
+      meta: { requiresAuth: true, requiresTeacher: true }
+    },
+    {
       path: '/',
       name: 'home',
       component: HomeView,
@@ -82,6 +88,21 @@ router.beforeEach((to, from, next) => {
     next({ name: 'login-aluno' })
   } else if (to.meta.guestOnly && isAuthenticated) {
     next({ name: 'dashboard' })
+  } else if (to.meta.requiresTeacher) {
+    let user = null
+    try {
+      user = JSON.parse(localStorage.getItem('@Questibular:user') || 'null')
+    } catch {
+      user = null
+    }
+    const isTeacher = user?.roles?.some(role =>
+      ['teacher', 'professor'].includes(String(role).toLowerCase())
+    )
+    if (!isTeacher) {
+      next({ name: 'dashboard' })
+    } else {
+      next()
+    }
   } else if (to.meta.requiresStudent) {
     let user = null
     try {
