@@ -180,8 +180,7 @@ async function handleLogout() {
 
 onMounted(async () => {
   try {
-    const currentYear = new Date().getFullYear()
-    const catalog = await getAvailableExams(2018, currentYear + 1)
+    const catalog = await getAvailableExams(2018, 2025)
     examsCatalog.value = (catalog.exams ?? [])
       .filter(exam =>
         exam?.year
@@ -308,8 +307,8 @@ async function handleStart() {
       <nav class="simulados-nav" aria-label="Navegação do aluno">
         <RouterLink class="simulados-nav-link" :to="{ name: 'dashboard' }">Início</RouterLink>
         <span class="simulados-nav-link" role="link" aria-disabled="true">Acervo de questões</span>
-        <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }">Simulados</RouterLink>
-        <span class="simulados-nav-link" role="link" aria-disabled="true">Meu desempenho</span>
+        <RouterLink class="simulados-nav-link" :to="{ name: 'simulados' }" aria-current="page">Simulados</RouterLink>
+        <RouterLink class="simulados-nav-link" :to="{ name: 'desempenho' }">Meu desempenho</RouterLink>
       </nav>
 
       <details class="simulados-user-menu">
