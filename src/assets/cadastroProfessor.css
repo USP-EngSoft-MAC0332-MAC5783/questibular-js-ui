@@ -1,0 +1,306 @@
+/* Cadastro de professor (issue #23).
+   Antes: bloco <style scoped> dentro de CadastroProfessor.vue.
+   [ALTERAÇÃO separação] Como este arquivo é global (não existe mais o "scoped"),
+   todos os seletores ficam dentro de .cadastro-professor, a classe da raiz da tela,
+   para não afetar nem sofrer interferência de outras telas. O conteúdo das regras
+   não mudou. */
+
+.cadastro-professor {
+  --azul: #2f5bea;
+  --azul-claro: #e8eefd;
+  --amarelo: #fff1d6;
+  --laranja: #f5a623;
+  --texto: #1b2236;
+  --texto-suave: #5d6578;
+  --borda: #dde1ea;
+  --erro: #c0392b;
+
+  display: grid;
+  grid-template-columns: minmax(280px, 34%) 1fr;
+  min-height: 100vh;
+  color: var(--texto);
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+/* ---------- Painel lateral ---------- */
+.cadastro-professor .cadastro__lateral {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 2rem;
+  background: var(--azul);
+  color: #fff;
+}
+.cadastro-professor .marca {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.cadastro-professor .marca__icone {
+  display: grid;
+  place-items: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.5rem;
+  background: var(--laranja);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.cadastro-professor .lateral__texto h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 1rem;
+}
+.cadastro-professor .lateral__texto p {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  max-width: 22rem;
+}
+
+/* ---------- Área do formulário ---------- */
+.cadastro-professor .cadastro__conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #f5f6fa;
+}
+.cadastro-professor .cartao {
+  width: 100%;
+  /* [ALTERAÇÃO issue #23] com uma coluna só, o cartão fica mais estreito.
+  max-width: 62rem;
+  */
+  max-width: 34rem;
+  padding: 1.75rem 2rem;
+  background: #fff;
+  border: 1px solid var(--borda);
+  border-radius: 1.25rem;
+}
+.cadastro-professor .cartao__titulo {
+  margin: 0.9rem 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.cadastro-professor .cartao__subtitulo {
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.cadastro-professor .colunas {
+  display: grid;
+  /* [ALTERAÇÃO issue #23] uma coluna só.
+  grid-template-columns: 1fr 1fr;
+  */
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+.cadastro-professor .coluna {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.cadastro-professor .coluna__titulo {
+  float: left;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.cadastro-professor .coluna__titulo + * {
+  clear: both;
+}
+.cadastro-professor .coluna__titulo--azul {
+  color: var(--azul);
+}
+.cadastro-professor .coluna--vinculo {
+  padding: 1rem;
+  background: var(--azul-claro);
+  border-radius: 0.9rem;
+}
+.cadastro-professor .coluna__descricao {
+  margin-bottom: 0.9rem;
+  font-size: 0.78rem;
+  color: var(--texto-suave);
+}
+
+.cadastro-professor .campo {
+  margin-bottom: 0.85rem;
+}
+.cadastro-professor .campo label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.cadastro-professor .campo input[type="text"],
+.cadastro-professor .campo input[type="email"],
+.cadastro-professor .campo input[type="password"] {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--borda);
+  border-radius: 0.7rem;
+  background: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--texto);
+}
+.cadastro-professor .campo input::placeholder {
+  color: #9aa1b2;
+}
+.cadastro-professor .campo input:focus-visible,
+.cadastro-professor .upload:focus-within,
+.cadastro-professor .botao-principal:focus-visible,
+.cadastro-professor .link-botao:focus-visible {
+  outline: 2px solid var(--azul);
+  outline-offset: 2px;
+}
+.cadastro-professor .campo input.invalido {
+  border-color: var(--erro);
+}
+.cadastro-professor .erro {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--erro);
+}
+/* [ALTERAÇÃO revisão] a lista de erros da senha agora fica num div; sem isso o ul
+   teria margem e recuo padrão do navegador. */
+.cadastro-professor .erro ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+/* [ALTERAÇÃO upload / issue #23] estilos do upload do comprovante, do aviso de
+   análise e da declaração, que não existem mais no template.
+.cadastro-professor .visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.cadastro-professor .upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  border: 1.5px dashed var(--azul);
+  border-radius: 0.7rem;
+  background: #fff;
+}
+.cadastro-professor .upload strong {
+  font-size: 0.8rem;
+  color: var(--azul);
+  word-break: break-all;
+}
+.cadastro-professor .upload span {
+  font-size: 0.68rem;
+  color: var(--texto-suave);
+  font-weight: 400;
+}
+.cadastro-professor .upload--erro {
+  border-color: var(--erro);
+}
+.cadastro-professor .aviso {
+  margin: 1.25rem 0 0.9rem;
+  padding: 0.9rem 1rem;
+  background: var(--amarelo);
+  border-radius: 0.7rem;
+  font-size: 0.82rem;
+}
+.cadastro-professor .declaracao {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+.cadastro-professor .declaracao label {
+  font-size: 0.75rem;
+  color: var(--texto-suave);
+}
+*/
+
+.cadastro-professor .feedback {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 0.7rem;
+  font-size: 0.85rem;
+}
+.cadastro-professor .feedback--success {
+  background: #e3f6ea;
+  color: #17613a;
+}
+.cadastro-professor .feedback--danger {
+  background: #fde8e6;
+  color: #8f2a20;
+}
+
+.cadastro-professor .botao-principal {
+  width: 100%;
+  padding: 0.8rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: var(--azul);
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cadastro-professor .botao-principal:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cadastro-professor .link-botao {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--azul);
+  font-weight: 600;
+  cursor: pointer;
+}
+.cadastro-professor .link-botao--pequeno {
+  font-size: 0.78rem;
+}
+.cadastro-professor .rodape {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--texto-suave);
+}
+
+/* ---------- Telas menores ---------- */
+@media (max-width: 991.98px) {
+  .cadastro-professor {
+    grid-template-columns: 1fr;
+  }
+  .cadastro-professor .cadastro__lateral {
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+  .cadastro-professor .cadastro__conteudo {
+    padding: 1rem;
+  }
+  .cadastro-professor .cartao {
+    padding: 1.25rem;
+  }
+  .cadastro-professor .colunas {
+    grid-template-columns: 1fr;
+  }
+}
