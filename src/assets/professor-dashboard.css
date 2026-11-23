@@ -92,11 +92,37 @@
   font-weight: 800;
 }
 
+/* Limita a altura e ativa barra de rolagem vertical nas listas de alunos */
 .professor-student-list {
-  max-height: clamp(160px, calc(100vh - 360px), 460px);
+  max-height: 280px;
   overflow-y: auto;
-  overscroll-behavior-y: contain;
-  padding-right: 6px;
+  padding-right: 0.35rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+}
+
+.professor-student-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.professor-student-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.professor-student-list::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.professor-student-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.7);
+}
+
+/* Barra de rolagem opcional para a lista horizontal/vertical de turmas */
+.professor-classes-list {
+  max-height: 110px;
+  overflow-y: auto;
+  padding-right: 0.35rem;
 }
 
 .professor-student-card {

@@ -31,17 +31,13 @@ async function handleSubmit() {
     return
   }
 
-  if (codigoTurma.value) {
-    errorMessage.value = 'O cadastro com código de turma ainda não está disponível. Deixe o campo em branco para criar sua conta.'
-    return
-  }
-
   isLoading.value = true
   try {
     await registerStudent({
       name: nome.value,
       email: email.value,
-      password: senha.value
+      password: senha.value,
+      classCode: codigoTurma.value,
     })
     await router.push({ name: 'login-aluno', query: { cadastro: 'sucesso' } })
   } catch (error) {
@@ -147,24 +143,25 @@ async function handleSubmit() {
                   :disabled="isLoading"
               />
             </div>
+
+            <div class="form-field">
+              <label for="student-class-code">Código da turma (opcional)</label>
+              <input
+                id="student-class-code"
+                v-model="codigoTurma"
+                type="text"
+                name="codigoTurma"
+                maxlength="32"
+                placeholder="Ex.: ESC-3A"
+                :disabled="isLoading"
+                @input="codigoTurma = codigoTurma.toUpperCase()"
+              />
+            </div>
           </div>
           <small id="signup-password-help" class="password-help">
             Use de 8 a 128 caracteres, com letra, número e um destes símbolos:
             ! @ # $ % ^ &amp; * ( ) , . ? " : { } | &lt; &gt;
           </small>
-
-          <div class="form-field">
-            <label for="signup-class-code">Código da turma (opcional)</label>
-            <input
-                id="signup-class-code"
-                v-model.trim="codigoTurma"
-                type="text"
-                name="classCode"
-                placeholder="Ex.: 3A-2026"
-                autocomplete="off"
-                :disabled="isLoading"
-            />
-          </div>
 
           <button class="submit-button" type="submit" :disabled="isLoading" :aria-busy="isLoading">
             {{ isLoading ? 'Cadastrando...' : 'Criar conta' }}

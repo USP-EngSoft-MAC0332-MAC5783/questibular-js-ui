@@ -1,13 +1,22 @@
 const API_URL = '/api/v1/Auth'
 
-const registerAccount = async ({ name, email, password }, role) => {
+const registerAccount = async ({ name, email, password, classCode = null }, role) => {
   let response
+  const normalizedClassCode = classCode && classCode.trim()
+    ? classCode.trim().toUpperCase()
+    : null
 
   try {
     response = await fetch(`${API_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role })
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        role,
+        ...(normalizedClassCode ? { classCode: normalizedClassCode } : {}),
+      }),
     })
   } catch {
     throw new Error('Não foi possível conectar ao servidor. Tente novamente em instantes.')
@@ -158,4 +167,59 @@ export const logout = async () => {
     localStorage.removeItem('@Questibular:refreshToken')
     localStorage.removeItem('@Questibular:user')
   }
+}
+
+export const updateUserProfile = async ({ name, classCode = null }) => {
+  let token = localStorage.getItem('@Questibular:token')
+  if (!token) {
+    throw new Error('Usuário não autenticado.')
+  }
+
+  const payload = {
+    name: name.trim(),
+    classCode: classCode && classCode.trim() ? classCode.trim().toUpperCase() : null,
+  }
+
+  const sendUpdate = (accessToken) =>
+    fetch('/api/v1/User/profile', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+    })
+
+  let response
+  try {
+    response = await sendUpdate(token)
+    if (response.status === 401) {
+      token = await refreshSession()
+      response = await sendUpdate(token)
+    }
+  } catch (error) {
+    if (error.name === 'TypeError') {
+      throw new Error('Não foi possível conectar ao servidor. Tente novamente em instantes.')
+    }
+    throw error
+  }
+
+  const data = await response.json().catch(() => null)
+
+  if (!response.ok) {
+    const validationErrors = Object.values(data?.errors || {})
+      .flat()
+      .filter(message => typeof message === 'string')
+      .join(' ')
+
+    throw new Error(
+      data?.detail || validationErrors || data?.title || 'Não foi possível atualizar o perfil.'
+    )
+  }
+
+  const currentUser = JSON.parse(localStorage.getItem('@Questibular:user') || '{}')
+  const mergedUser = { ...currentUser, ...data }
+  localStorage.setItem('@Questibular:user', JSON.stringify(mergedUser))
+
+  return mergedUser
 }
