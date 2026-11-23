@@ -21,10 +21,6 @@ const form = reactive({
   email: "",
   senha: "",
   confirmarSenha: "",
-  // [ALTERAÇÃO issue #23] "registro" (matrícula) não está na issue, só no mockup.
-  // registro: "",
-  redeEnsino: "",
-  escola: "",
   /* declaracao: false, */
 });
 
@@ -84,19 +80,6 @@ function validarNome() {
   definirErro("nome", regras.validarNome(form.nome));
 }
 
-function validarRedeEnsino() {
-  definirErro(
-    "redeEnsino",
-    regras.validarObrigatorio(form.redeEnsino, "Informe sua rede de ensino."),
-  );
-}
-
-function validarEscola() {
-  definirErro(
-    "escola",
-    regras.validarObrigatorio(form.escola, "Informe sua escola."),
-  );
-}
 
 function validar() {
   // [ALTERAÇÃO upload] sem comprovante, não há erro de arquivo para preservar.
@@ -107,8 +90,6 @@ function validar() {
   validarEmail();
   validarSenha();
   validarConfirmarSenha();
-  validarRedeEnsino();
-  validarEscola();
 
   return Object.keys(erros).length === 0;
 }
@@ -123,16 +104,6 @@ async function enviar() {
 
   enviando.value = true;
   try {
-    // [ALTERAÇÃO issue #25] o envio é JSON com os campos exigidos pela API. O "role"
-    // ("teacher") é definido dentro do registerTeacher().
-    // confirmarSenha não vai pro backend (validação só de tela).
-    //
-    // [ALTERAÇÃO RegisterRequest] rede de ensino e escola NÃO existem no back:
-    // o RegisterRequest só tem email, name, role e password, então esses dados
-    // não são enviados (campos extras seriam ignorados).
-    // TODO: combinar com o time: remover os dois campos do formulário ou pedir
-    // que o back passe a aceitá-los (a issue #23 pede os campos na tela).
-    // [ALTERAÇÃO issue #23] registro e comprovante removidos do envio.
     await registerTeacher({
       name: form.nome.trim(),
       email: form.email,
@@ -323,102 +294,7 @@ const irParaLogin = () => router.push("/login/professor");
                   erros.confirmarSenha
                 }}</small>
               </div>
-
-              <!-- [ALTERAÇÃO issue #23] Rede de ensino e Escola foram movidos da seção 2
-                   do mockup para cá, e o formulário ficou numa coluna só, como a lista
-                   de campos da issue. -->
-              <!-- TODO: se Rede de ensino virar select com dados do back, trocar aqui -->
-              <div class="campo">
-                <label for="redeEnsino">Rede de ensino</label>
-                <input
-                  id="redeEnsino"
-                  v-model="form.redeEnsino"
-                  type="text"
-                  placeholder="Ex.: Secretaria de Educação do Estado"
-                  :class="{ invalido: erros.redeEnsino }"
-                  :aria-invalid="!!erros.redeEnsino"
-                  @blur="validarRedeEnsino()"
-                  @input="erros.redeEnsino && validarRedeEnsino()"
-                />
-                <small v-if="erros.redeEnsino" class="erro">{{
-                  erros.redeEnsino
-                }}</small>
-              </div>
-
-              <div class="campo">
-                <label for="escola">Escola</label>
-                <input
-                  id="escola"
-                  v-model="form.escola"
-                  type="text"
-                  placeholder="Nome da escola onde leciona"
-                  :class="{ invalido: erros.escola }"
-                  :aria-invalid="!!erros.escola"
-                  @blur="validarEscola()"
-                  @input="erros.escola && validarEscola()"
-                />
-                <small v-if="erros.escola" class="erro">{{
-                  erros.escola
-                }}</small>
-              </div>
             </fieldset>
-
-            <!-- [ALTERAÇÃO issue #23 / upload] seção 2 do mockup removida: título
-                 "Verificação de vínculo docente", texto explicativo, campo de registro
-                 funcional/matrícula e upload do comprovante. Rede de ensino e Escola
-                 estão na seção acima.
-            <fieldset class="coluna coluna--vinculo">
-              <legend class="coluna__titulo coluna__titulo--azul">
-                2. Verificação de vínculo docente
-              </legend>
-              <p class="coluna__descricao">
-                Só ativamos contas de professores com vínculo comprovado em uma
-                rede de ensino.
-              </p>
-
-              <div class="campo">
-                <label for="registro">Registro funcional / matrícula</label>
-                <input
-                  id="registro"
-                  v-model="form.registro"
-                  type="text"
-                  placeholder="Número informado pela rede de ensino"
-                  :class="{ invalido: erros.registro }"
-                  :aria-invalid="!!erros.registro"
-                />
-                <small v-if="erros.registro" class="erro">{{
-                  erros.registro
-                }}</small>
-              </div>
-
-              <div class="campo">
-                <input
-                  id="comprovante"
-                  class="visualmente-oculto"
-                  type="file"
-                  accept=".pdf,image/png,image/jpeg"
-                  @change="selecionarArquivo"
-                />
-                <label
-                  for="comprovante"
-                  class="upload"
-                  :class="{ 'upload--erro': erros.comprovante }"
-                >
-                  <strong>{{
-                    comprovante
-                      ? comprovante.name
-                      : "Anexar comprovante de vínculo"
-                  }}</strong>
-                  <span
-                    >Declaração da escola ou contracheque (PDF ou imagem)</span
-                  >
-                </label>
-                <small v-if="erros.comprovante" class="erro">{{
-                  erros.comprovante
-                }}</small>
-              </div>
-            </fieldset>
-            -->
           </div>
 
           <!-- [ALTERAÇÃO issue #23] aviso "conta ficará em análise" removido: a issue

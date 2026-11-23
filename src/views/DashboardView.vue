@@ -220,7 +220,7 @@ async function loadTeacherStudentDashboard(studentId) {
 }
 
 async function openReview(item) {
-  const attemptId = item?.attemptId || item?.exam?.id
+  const attemptId = item?.attemptId || item?.id
   if (!attemptId) {
     errorMessage.value = 'Não foi possível identificar este simulado.'
     return

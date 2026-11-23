@@ -71,8 +71,15 @@ export function finishExam(payload) {
   return request('/finish', { method: 'POST', body: payload })
 }
 
-export function getStudentExamHistory(studentId, limit = 50, offset = 0) {
-  return request(`/list/${encodeURIComponent(studentId)}?limit=${limit}&offset=${offset}`)
+export async function getStudentExamHistory(studentId, limit = 50, offset = 0) {
+  try {
+    return await request(`/list/${encodeURIComponent(studentId)}?limit=${limit}&offset=${offset}`)
+  } catch (error) {
+    if (error.message?.includes('HTTP 404')) {
+      return { exams: [] }
+    }
+    throw error
+  }
 }
 
 export function getExamResult(attemptId, limit = 50, offset = 0) {
@@ -157,4 +164,60 @@ export function getStudentScoreById(studentId) {
 
 export function getAvailableStudents() {
   return request('/list', { baseUrl: '/api/v1/users' })
+}
+
+export function getTeacherClasses() {
+  return request('', { baseUrl: '/api/v1/teachers/classes' })
+}
+
+export function createTeacherClass(code) {
+  return request('', {
+    method: 'POST',
+    baseUrl: '/api/v1/teachers/classes',
+    body: { code: String(code).trim().toUpperCase() },
+  })
+}
+
+export function getTeacherClassStudents(classCode) {
+  return request(`/${encodeURIComponent(classCode)}/students`, {
+    baseUrl: '/api/v1/teachers/classes',
+  })
+}
+
+export async function deleteTeacherClass(classCode) {
+  let token = localStorage.getItem('@Questibular:token')
+  if (!token) {
+    throw new Error('Faça login como professor para remover uma turma.')
+  }
+
+  const sendDelete = (accessToken) =>
+    fetch(`/api/v1/teachers/classes/${encodeURIComponent(classCode)}`, {
+      method: 'DELETE',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+  let response
+  try {
+    response = await sendDelete(token)
+    if (response.status === 401) {
+      token = await refreshSession()
+      response = await sendDelete(token)
+    }
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error('Não foi possível conectar ao servidor. Tente novamente.')
+    }
+    throw error
+  }
+
+  if (response.status === 204) return true
+
+  const data = await response.json().catch(() => null)
+  if (!response.ok) {
+    throw new Error(data?.detail || data?.title || `Não foi possível remover a turma (HTTP ${response.status}).`)
+  }
+  return true
 }

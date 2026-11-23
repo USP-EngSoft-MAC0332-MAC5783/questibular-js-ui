@@ -1,10 +1,13 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink } from 'vue-router'
 import {
-  getAvailableStudents,
+  createTeacherClass,
+  deleteTeacherClass,
   getLinkedStudents,
   getStudentScoreById,
+  getTeacherClasses,
+  getTeacherClassStudents,
   linkStudent,
   unlinkStudent,
 } from '@/services/exams'
@@ -20,7 +23,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['logout'])
-const router = useRouter()
 const students = ref([])
 const studentScores = ref({})
 const selectedStudentId = ref(
@@ -28,11 +30,25 @@ const selectedStudentId = ref(
 )
 const isLoading = ref(true)
 const errorMessage = ref('')
+
+// Gestão de turmas
+const teacherClasses = ref([])
+const selectedClassCode = ref('')
+const classStudents = ref([])
+const isLoadingClassStudents = ref(false)
+const showCreateClassModal = ref(false)
+const newClassCode = ref('')
+const isCreatingClass = ref(false)
+const deletingClassCode = ref('')
+const classMessage = ref('')
+const classMessageIsError = ref(false)
+
+// Modal e vinculação de alunos
 const showLinkModal = ref(false)
-const availableStudents = ref([])
 const studentSearch = ref('')
 const manualStudentId = ref('')
 const isLinking = ref(false)
+const linkingStudentId = ref('')
 const linkMessage = ref('')
 const unlinkingStudentId = ref('')
 const unlinkMessage = ref('')
@@ -54,10 +70,10 @@ const averageAccuracy = computed(() => {
   if (!scores.length) return 0
   return scores.reduce((sum, value) => sum + value, 0) / scores.length
 })
-const filteredAvailableStudents = computed(() => {
+const filteredClassStudents = computed(() => {
   const term = studentSearch.value.trim().toLocaleLowerCase('pt-BR')
-  if (!term) return availableStudents.value
-  return availableStudents.value.filter(student =>
+  if (!term) return classStudents.value
+  return classStudents.value.filter(student =>
     `${student.name} ${student.email}`.toLocaleLowerCase('pt-BR').includes(term)
   )
 })
@@ -94,22 +110,105 @@ async function loadStudentScore(student) {
   }
 }
 
+function openCreateClassModal() {
+  newClassCode.value = ''
+  classMessage.value = ''
+  classMessageIsError.value = false
+  showCreateClassModal.value = true
+}
+
+async function loadClasses() {
+  try {
+    teacherClasses.value = await getTeacherClasses()
+    if (!teacherClasses.value.length) {
+      selectedClassCode.value = ''
+      classStudents.value = []
+      return
+    }
+
+    const stillExists = teacherClasses.value.some(
+      item => item.code === selectedClassCode.value
+    )
+    const codeToLoad = stillExists
+      ? selectedClassCode.value
+      : teacherClasses.value[0].code
+
+    await selectClass(codeToLoad)
+  } catch (error) {
+    classMessage.value = error.message || 'Não foi possível carregar suas turmas.'
+    classMessageIsError.value = true
+  }
+}
+
+async function selectClass(code) {
+  selectedClassCode.value = code
+  isLoadingClassStudents.value = true
+  classMessage.value = ''
+  classMessageIsError.value = false
+  try {
+    classStudents.value = await getTeacherClassStudents(code)
+  } catch (error) {
+    classStudents.value = []
+    classMessage.value = error.message || 'Não foi possível carregar os alunos desta turma.'
+    classMessageIsError.value = true
+  } finally {
+    isLoadingClassStudents.value = false
+  }
+}
+
+async function handleCreateClass() {
+  const code = newClassCode.value.trim().toUpperCase()
+  if (!code || isCreatingClass.value) return
+
+  isCreatingClass.value = true
+  classMessage.value = ''
+  classMessageIsError.value = false
+  try {
+    const created = await createTeacherClass(code)
+    newClassCode.value = ''
+    showCreateClassModal.value = false
+    await loadClasses()
+    await selectClass(created.code)
+    classMessage.value = `Turma ${created.code} criada com sucesso.`
+  } catch (error) {
+    classMessage.value = error.message || 'Não foi possível criar a turma.'
+    classMessageIsError.value = true
+  } finally {
+    isCreatingClass.value = false
+  }
+}
+
+async function handleDeleteClass(code) {
+  if (deletingClassCode.value) return
+
+  const confirmed = window.confirm(
+    `Excluir a turma ${code}? Os alunos já vinculados continuarão na sua lista.`
+  )
+  if (!confirmed) return
+
+  deletingClassCode.value = code
+  classMessage.value = ''
+  classMessageIsError.value = false
+  try {
+    await deleteTeacherClass(code)
+    await loadClasses()
+    classMessage.value = `Turma ${code} removida.`
+  } catch (error) {
+    classMessage.value = error.message || 'Não foi possível remover a turma.'
+    classMessageIsError.value = true
+  } finally {
+    deletingClassCode.value = ''
+  }
+}
+
 async function openLinkModal() {
   showLinkModal.value = true
   linkMessage.value = ''
   studentSearch.value = ''
   manualStudentId.value = ''
-  try {
-    availableStudents.value = await getAvailableStudents()
-  } catch (error) {
-    availableStudents.value = []
-    linkMessage.value =
-      'A busca geral não está disponível para esta conta. Informe o ID do aluno para vincular.'
+  if (selectedClassCode.value) {
+    await selectClass(selectedClassCode.value)
   }
-}
-
-async function linkSelectedStudent(student) {
-  await linkById(student.id)
 }
 
 async function linkById(studentId) {
@@ -120,15 +219,28 @@ async function linkById(studentId) {
   }
 
   isLinking.value = true
+  linkingStudentId.value = id
   linkMessage.value = ''
+  classMessage.value = ''
+  classMessageIsError.value = false
   try {
     await linkStudent(id)
     showLinkModal.value = false
     await loadLinkedStudents()
+    if (selectedClassCode.value) {
+      await selectClass(selectedClassCode.value)
+    }
+    classMessage.value = 'Aluno vinculado com sucesso.'
   } catch (error) {
-    linkMessage.value = error.message || 'Não foi possível vincular o aluno.'
+    const message = error.message || 'Não foi possível vincular o aluno.'
+    linkMessage.value = message
+    if (!showLinkModal.value) {
+      classMessage.value = message
+      classMessageIsError.value = true
+    }
   } finally {
     isLinking.value = false
+    linkingStudentId.value = ''
   }
 }
 
@@ -160,6 +272,10 @@ async function unlinkLinkedStudent(student) {
       } else {
         localStorage.removeItem('@Questibular:selectedStudentId')
       }
+    }
+
+    if (selectedClassCode.value) {
+      await selectClass(selectedClassCode.value)
     }
 
     unlinkMessage.value = `Vínculo com ${student.name} removido.`
@@ -203,7 +319,9 @@ async function handleLogout() {
   emit('logout')
 }
 
-onMounted(loadLinkedStudents)
+onMounted(async () => {
+  await Promise.all([loadLinkedStudents(), loadClasses()])
+})
 </script>
 
 <template>
@@ -258,24 +376,34 @@ onMounted(loadLinkedStudents)
         <div>
           <h1>Olá, {{ professorName }}</h1>
           <p v-if="selectedStudent">
-            Turma · {{ students.length }} aluno{{ students.length === 1 ? '' : 's' }} vinculado{{ students.length === 1 ? '' : 's' }} · selecionado: {{ selectedStudent.name }}
+            {{ teacherClasses.length }} turma{{ teacherClasses.length === 1 ? '' : 's' }} ·
+            {{ students.length }} aluno{{ students.length === 1 ? '' : 's' }} vinculado{{ students.length === 1 ? '' : 's' }} ·
+            selecionado: {{ selectedStudent.name }}
           </p>
-          <p v-else>Turma · {{ students.length }} aluno{{ students.length === 1 ? '' : 's' }} vinculado{{ students.length === 1 ? '' : 's' }}.</p>
+          <p v-else>
+            {{ teacherClasses.length }} turma{{ teacherClasses.length === 1 ? '' : 's' }} ·
+            {{ students.length }} aluno{{ students.length === 1 ? '' : 's' }} vinculado{{ students.length === 1 ? '' : 's' }}.
+          </p>
         </div>
-        <button type="button" class="btn btn-qb professor-link-button" @click="openLinkModal">
-          Cadastrar aluno
-        </button>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-outline-primary professor-link-button" @click="openCreateClassModal">
+            Cadastrar turma
+          </button>
+          <button type="button" class="btn btn-qb professor-link-button" @click="openLinkModal">
+            Vincular aluno
+          </button>
+        </div>
       </header>
 
-      <p v-if="isLoading" class="alert alert-light" role="status">Carregando alunos vinculados...</p>
+      <p v-if="isLoading" class="alert alert-light" role="status">Carregando dados...</p>
       <p v-else-if="errorMessage" class="alert alert-danger" role="alert">{{ errorMessage }}</p>
 
       <template v-else>
-        <section class="professor-stat-grid" aria-label="Resumo da turma">
+        <section class="professor-stat-grid" aria-label="Resumo geral">
           <article class="professor-stat-card">
-            <span>Alunos na turma</span>
+            <span>Alunos vinculados</span>
             <strong>{{ students.length }}</strong>
-            <small>Alunos vinculados</small>
+            <small>Em {{ teacherClasses.length }} turma(s)</small>
           </article>
           <article class="professor-stat-card">
             <span>Média nos simulados</span>
@@ -289,9 +417,100 @@ onMounted(loadLinkedStudents)
           </article>
         </section>
 
+        <section class="professor-feedback-card mb-4" aria-labelledby="teacher-classes-title">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+              <h2 id="teacher-classes-title" class="mb-1">Minhas turmas</h2>
+              <p class="mb-0 text-muted">Crie códigos de turma (ex.: ESC-3A) para seus alunos informarem no cadastro ou perfil.</p>
+            </div>
+            <form class="d-flex gap-2" @submit.prevent="handleCreateClass">
+              <input
+                v-model="newClassCode"
+                type="text"
+                maxlength="32"
+                placeholder="Ex.: ESC-3A"
+                aria-label="Código da nova turma"
+                :disabled="isCreatingClass"
+                @input="newClassCode = newClassCode.toUpperCase()"
+              />
+              <button type="submit" class="btn btn-qb" :disabled="isCreatingClass || !newClassCode.trim()">
+                {{ isCreatingClass ? 'Criando...' : 'Criar turma' }}
+              </button>
+            </form>
+          </div>
+
+          <p
+            v-if="classMessage"
+            class="professor-unlink-message"
+            :class="{ 'is-error': classMessageIsError }"
+            :role="classMessageIsError ? 'alert' : 'status'"
+          >
+            {{ classMessage }}
+          </p>
+
+          <div v-if="teacherClasses.length" class="d-flex flex-wrap gap-2 mb-3">
+            <div v-for="item in teacherClasses" :key="item.id" class="btn-group" role="group">
+              <button
+                type="button"
+                class="btn"
+                :class="selectedClassCode === item.code ? 'btn-qb' : 'btn-outline-secondary'"
+                @click="selectClass(item.code)"
+              >
+                {{ item.code }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-danger"
+                :disabled="deletingClassCode === item.code"
+                :aria-label="`Excluir turma ${item.code}`"
+                :title="`Excluir turma ${item.code}`"
+                @click="handleDeleteClass(item.code)"
+              >
+                <i class="bi bi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+          <p v-else class="professor-empty mb-0">Nenhuma turma criada ainda.</p>
+
+          <div v-if="selectedClassCode" class="mt-3">
+            <h3 class="h6 mb-2">Estudantes inscritos na turma {{ selectedClassCode }}</h3>
+            <p v-if="isLoadingClassStudents" class="text-muted">Carregando estudantes da turma...</p>
+            <p v-else-if="!classStudents.length" class="professor-empty mb-0">
+              Nenhum estudante informou o código {{ selectedClassCode }} ainda.
+            </p>
+            <div v-else class="professor-student-list">
+              <div
+                v-for="student in classStudents"
+                :key="student.id"
+                class="professor-student-row"
+              >
+                <div class="professor-student-card">
+                  <span class="professor-student-avatar">{{ userInitial(student.name) }}</span>
+                  <span class="professor-student-info">
+                    <strong>{{ student.name }}</strong>
+                    <small>{{ student.email }}</small>
+                  </span>
+                  <span class="professor-student-status">
+                    {{ student.isLinked ? 'Vinculado' : 'Disponível' }}
+                  </span>
+                </div>
+                <button
+                  v-if="!student.isLinked"
+                  type="button"
+                  class="btn btn-qb"
+                  :disabled="isLinking"
+                  @click="linkById(student.id)"
+                >
+                  {{ linkingStudentId === student.id ? 'Vinculando...' : 'Vincular' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="professor-content-grid">
           <div>
-            <h2>Alunos da turma</h2>
+            <h2>Alunos vinculados</h2>
             <p
               v-if="unlinkMessage"
               class="professor-unlink-message"
@@ -358,37 +577,88 @@ onMounted(loadLinkedStudents)
       </template>
     </main>
 
+    <!-- Modal Cadastrar Turma -->
+    <div v-if="showCreateClassModal" class="professor-link-modal" role="dialog" aria-modal="true" aria-labelledby="create-class-title">
+      <section class="professor-link-panel">
+        <header>
+          <div>
+            <h2 id="create-class-title">Cadastrar turma</h2>
+            <p>Informe o código da turma (ex.: ESC-3A, INS-2B) para compartilhar com seus alunos.</p>
+          </div>
+          <button type="button" class="professor-link-close" aria-label="Fechar" @click="showCreateClassModal = false">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        <form class="professor-manual-link" @submit.prevent="handleCreateClass">
+          <label for="new-class-code-modal">Código da turma</label>
+          <input
+            id="new-class-code-modal"
+            v-model="newClassCode"
+            type="text"
+            minlength="2"
+            maxlength="32"
+            placeholder="Ex.: ESC-3A"
+            required
+            :disabled="isCreatingClass"
+            @input="newClassCode = newClassCode.toUpperCase()"
+          />
+          <button type="submit" class="btn btn-qb" :disabled="isCreatingClass || !newClassCode.trim()">
+            {{ isCreatingClass ? 'Cadastrando...' : 'Cadastrar turma' }}
+          </button>
+        </form>
+
+        <p v-if="classMessage && classMessageIsError" class="professor-link-message" role="alert">
+          {{ classMessage }}
+        </p>
+      </section>
+    </div>
+
+    <!-- Modal Vincular Aluno -->
     <div v-if="showLinkModal" class="professor-link-modal" role="dialog" aria-modal="true" aria-labelledby="link-student-title">
       <section class="professor-link-panel">
         <header>
           <div>
-            <h2 id="link-student-title">Cadastrar aluno</h2>
-            <p>Busque um aluno disponível ou informe o identificador.</p>
+            <h2 id="link-student-title">Vincular aluno</h2>
+            <p>Selecione um aluno da turma ou informe o identificador.</p>
           </div>
           <button type="button" class="professor-link-close" aria-label="Fechar" @click="showLinkModal = false">
             <i class="bi bi-x-lg" aria-hidden="true"></i>
           </button>
         </header>
 
-        <div v-if="availableStudents.length" class="professor-student-search">
-          <input v-model="studentSearch" type="search" placeholder="Buscar por nome ou e-mail" />
+        <div v-if="teacherClasses.length" class="professor-manual-link mb-3">
+          <label for="modal-class-select">Filtrar por turma</label>
+          <select
+            id="modal-class-select"
+            :value="selectedClassCode"
+            @change="selectClass($event.target.value)"
+          >
+            <option v-for="c in teacherClasses" :key="c.id" :value="c.code">
+              {{ c.code }}
+            </option>
+          </select>
+        </div>
+
+        <div v-if="classStudents.length" class="professor-student-search">
+          <input v-model="studentSearch" type="search" placeholder="Buscar por nome ou e-mail na turma" />
           <div class="professor-available-list">
             <button
-              v-for="student in filteredAvailableStudents"
+              v-for="student in filteredClassStudents"
               :key="student.id"
               type="button"
-              :disabled="isLinking"
-              @click="linkSelectedStudent(student)"
+              :disabled="isLinking || student.isLinked"
+              @click="linkById(student.id)"
             >
               <span>{{ userInitial(student.name) }}</span>
               <strong>{{ student.name }}</strong>
-              <small>{{ student.email }}</small>
+              <small>{{ student.isLinked ? 'Já vinculado' : student.email }}</small>
             </button>
           </div>
         </div>
 
         <div class="professor-manual-link">
-          <label for="student-id">ID do aluno</label>
+          <label for="student-id">Ou vincular por ID do aluno</label>
           <input id="student-id" v-model="manualStudentId" type="text" placeholder="Identificador do aluno" />
           <button type="button" class="btn btn-qb" :disabled="isLinking" @click="linkById()">
             {{ isLinking ? 'Vinculando...' : 'Vincular aluno' }}
